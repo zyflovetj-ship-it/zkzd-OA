@@ -1,0 +1,20 @@
+# 构建上下文过滤：避免把宿主机的 node_modules 覆盖进镜像（跨平台二进制不兼容，
+# 会导致 node:20-alpine 内的 npm ci 结果被 linux 原生模块之外的文件污染）。
+node_modules
+dist
+.test-build
+.eval-rollup
+build.log
+
+# 环境与本地配置（生产变量由 compose 注入）
+.env
+.env.*
+!.env.example
+
+# 版本控制与编辑器
+.git
+.gitignore
+.vscode
+.idea
+.DS_Store
+*.log

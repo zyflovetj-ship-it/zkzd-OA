@@ -1,0 +1,12 @@
+import sqlite3
+conn = sqlite3.connect('.smoke.db')
+cursor = conn.cursor()
+cursor.execute('DROP TABLE IF EXISTS budgets')
+cursor.execute('DROP INDEX IF EXISTS ix_budgets_code')
+cursor.execute('DROP INDEX IF EXISTS ix_budgets_department_id')
+cursor.execute('DROP INDEX IF EXISTS ix_budgets_status')
+cursor.execute('DROP INDEX IF EXISTS ix_budgets_date_range')
+cursor.execute('DROP INDEX IF EXISTS ix_expense_claims_budget_id')
+conn.commit()
+conn.close()
+print('Cleaned up')

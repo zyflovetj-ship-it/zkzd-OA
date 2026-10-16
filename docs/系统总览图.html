@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="GVGbfGMk8k1iBUhTEKlgXe">
+<head data-page-node-id="gBAImkWOfXAEaed5somFY6">
+<meta charset="utf-8" data-page-node-id="49CCdxPYEzhWeR5TA5GLpW">
+<meta name="viewport" content="width=device-width, initial-scale=1" data-page-node-id="WiV1jvHG7ZRiSdyDBfXGtc">
+<title>zk-oa 系统总览（功能流程 + 部署架构）</title>
+<style>
+  html, body { margin: 0; background: #ffffff; }
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif; }
+  .wrap { width: 95vw; max-width: 1200px; margin: 28px auto; }
+  .wrap svg {
+    width: 100%; height: auto; display: block;
+    box-shadow: 0 2px 18px rgba(12, 68, 124, 0.12);
+    border-radius: 12px;
+  }
+</style>
+</head>
+<body data-page-node-id="FEWpHGdv5G1VUS3u1dYqIW">
+<div class="wrap" data-page-node-id="RENu3MKnYzrmF7AWSecC8q">
+<svg viewBox="0 0 680 624" width="100%" role="img" xmlns="http://www.w3.org/2000/svg" data-page-node-id="e74Bu5HEipdpYU37rTU4td">
+  <title>zk-oa 系统总览（功能流程 + 部署架构）</title>
+  <desc data-page-node-id="0hTAWp2zA0MbnO2LBAimfn">左列功能流程（角色→认证→业务模块→聚合→公共能力），右列 Web 架构（浏览器→Nginx→API 网关→应用三层→SSE），底部共享数据底座；应用层实现业务模块，SSE 实时推送回浏览器。</desc>
+  <defs data-page-node-id="7dzCKzWdNGp2dEaP4NbJ6t">
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse" data-page-node-id="dS8WNjFUJKpBnZnlJOUGQS">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="lufXFh1Db8VMpL1MP8kyHl"/>
+    </marker>
+    <style>
+      text { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif; }
+      .th { font-size: 16px; font-weight: 700; }
+      .ts { font-size: 12px; font-weight: 600; }
+      .bt { font-size: 15px; font-weight: 700; }
+      .bs { font-size: 11.5px; font-weight: 500; }
+      .arr { fill: none; }
+    </style>
+  </defs>
+
+  <text class="th" x="40" y="34" fill="#0C447C" data-page-node-id="wokmLVk88dHtbui46uG9Xt">中科智电 OA · 系统总览（功能流程 + 部署架构）</text>
+  <text class="ts" x="640" y="34" text-anchor="end" fill="#185FA5" data-page-node-id="ThHSdbQmdla1XGKNHDnQwo">左：功能流程 · 右：Web 架构</text>
+
+  <g class="node c-blue" fill="#E6F1FB" stroke="#185FA5" data-page-node-id="L1Z0p5B5CAcWso0JYuKlNM">
+    <rect x="40" y="60" width="104" height="46" rx="9" stroke-width="0.6" data-page-node-id="SQqmlpddbtGxTXHbHStOXc"/>
+    <text class="bt" x="92" y="87" text-anchor="middle" dominant-baseline="central" fill="#0C447C" data-page-node-id="kqMA6Rzqe2Qscq2o0phfap">管理员</text>
+  </g>
+  <g class="node c-blue" fill="#E6F1FB" stroke="#185FA5" data-page-node-id="8Ey44Ce2QAVQcNpddjLU1B">
+    <rect x="158" y="60" width="104" height="46" rx="9" stroke-width="0.6" data-page-node-id="q5ZOWiR0fc381and7tA4wy"/>
+    <text class="bt" x="210" y="87" text-anchor="middle" dominant-baseline="central" fill="#0C447C" data-page-node-id="9R0QOZPsM0J0K0ZlMerHFJ">部门经理</text>
+  </g>
+  <g class="node c-blue" fill="#E6F1FB" stroke="#185FA5" data-page-node-id="i065dan6OhWpCroqUbrRMh">
+    <rect x="276" y="60" width="104" height="46" rx="9" stroke-width="0.6" data-page-node-id="8QJnbmHwgnbzRgQeWlsSGk"/>
+    <text class="bt" x="328" y="87" text-anchor="middle" dominant-baseline="central" fill="#0C447C" data-page-node-id="HFjLPC0smgL8GUuXZCbOFs">普通员工</text>
+  </g>
+  <path class="arr" d="M210,106 L210,124" stroke="#185FA5" stroke-width="1.4" marker-end="url(#arrow)" data-page-node-id="1VwmhdrOdLanWmKsSCVCPx"/>
+
+  <g class="node c-blue" fill="#E6F1FB" stroke="#185FA5" data-page-node-id="8AG8lJg1r6Sqh4DxXSsnG6">
+    <rect x="40" y="126" width="340" height="64" rx="12" stroke-width="0.6" data-page-node-id="pm8d7uQPixfYWijSw7wWuj"/>
+    <text class="bt" x="210" y="150" text-anchor="middle" dominant-baseline="central" fill="#0C447C" data-page-node-id="SXIAKFTqa2mHK4th9OuRAl">统一认证与权限网关</text>
+    <text class="ts" x="210" y="172" text-anchor="middle" dominant-baseline="central" fill="#185FA5" data-page-node-id="VUIEBPfPBVHUJzIaiEkgN0">JWT 双令牌 · RBAC 角色权限</text>
+  </g>
+  <path class="arr" d="M210,190 L210,210" stroke="#185FA5" stroke-width="1.4" marker-end="url(#arrow)" data-page-node-id="dKFDgW2oPuqQkYqWautZN7"/>
+
+  <rect x="40" y="212" width="340" height="84" rx="16" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.6" data-page-node-id="pXUNmcjasxOARZhvyKRZTx"/>
+  <text class="ts" x="50" y="230" fill="#185FA5" data-page-node-id="Hxlx7ilG5fjvcTnomThYaT">核心业务域</text>
+  <g class="node c-blue" fill="#FFFFFF" stroke="#185FA5" data-page-node-id="0qbdZ9K5fMlvwxl7lZB2wT">
+    <rect x="40" y="240" width="60" height="40" rx="9" stroke-width="0.6" data-page-node-id="2tY5fTzXH2JuAb0JyN0AmA"/>
+    <text class="bs" x="70" y="260" text-anchor="middle" dominant-baseline="central" fill="#0C447C" data-page-node-id="cBmAQrWs5InIgLS6BUmMc2">组织管理</text>
+  </g>
+  <g class="node c-blue" fill="#FFFFFF" stroke="#185FA5" data-page-node-id="0Onlw1T1YXggXzpbcTqHG2">
+    <rect x="110" y="240" width="60" height="40" rx="9" stroke-width="0.6" data-page-node-id="M0cBZyw0ezU8yBVFjkH0KN"/>
+    <text class="bs" x="140" y="260" text-anchor="middle" dominant-baseline="central" fill="#0C447C" data-page-node-id="4zOGqs5aCPNp9Naflicz4O">请假审批</text>
+  </g>
+  <g class="node c-blue" fill="#FFFFFF" stroke="#185FA5" data-page-node-id="NAjI2JM6VYqcfxnTouckTn">
+    <rect x="180" y="240" width="60" height="40" rx="9" stroke-width="0.6" data-page-node-id="j8fmmU9tx3B7oZRJTCG0cf"/>
+    <text class="bs" x="210" y="260" text-anchor="middle" dominant-baseline="central" fill="#0C447C" data-page-node-id="SslLuTPa4DlNTknYInqMct">审批工作流</text>
+  </g>
+  <g class="node c-blue" fill="#FFFFFF" stroke="#185FA5" data-page-node-id="segnuJDzYObpyZldnCA0yu">
+    <rect x="250" y="240" width="60" height="40" rx="9" stroke-width="0.6" data-page-node-id="LGWhh20v1wFR2y3kyIzjJ7"/>
+    <text class="bs" x="280" y="260" text-anchor="middle" dominant-baseline="central" fill="#0C447C" data-page-node-id="ooi2A0dfhHgbshQW6LrFuS">公告文档</text>
+  </g>
+  <g class="node c-blue" fill="#FFFFFF" stroke="#185FA5" data-page-node-id="DbPcEYLZPx8LQD73MMRMIE">
+    <rect x="320" y="240" width="60" height="40" rx="9" stroke-width="0.6" data-page-node-id="9zY2ewHiGtGxCcCAazRGDo"/>
+    <text class="bs" x="350" y="260" text-anchor="middle" dominant-baseline="central" fill="#0C447C" data-page-node-id="sJ1Nt7t4mgRcBiW4DEaFo3">电子签单</text>
+  </g>
+  <path class="arr" d="M210,296 L210,316" stroke="#185FA5" stroke-width="1.4" marker-end="url(#arrow)" data-page-node-id="972er6cZ6WAwwMnFdiUYmA"/>
+
+  <rect x="40" y="318" width="340" height="76" rx="16" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.6" data-page-node-id="lcQsFb4SexZBSBXnlvl8a2"/>
+  <text class="ts" x="50" y="336" fill="#185FA5" data-page-node-id="uRz9G4vFUUCTsBPLDEjT6E">聚合与运营域</text>
+  <g class="node c-blue" fill="#FFFFFF" stroke="#185FA5" data-page-node-id="3UERCgAq2aFTA0obecUGg1">
+    <rect x="40" y="348" width="76" height="36" rx="9" stroke-width="0.6" data-page-node-id="beLG5K7i09c5KKB5viZoHS"/>
+    <text class="bs" x="78" y="366" text-anchor="middle" dominant-baseline="central" fill="#0C447C" data-page-node-id="Ai6cAdSqqT5F3fDH5C2Ojl">内容门户</text>
+  </g>
+  <g class="node c-blue" fill="#FFFFFF" stroke="#185FA5" data-page-node-id="XaZl4yeszY2klcyl1xtNKB">
+    <rect x="128" y="348" width="76" height="36" rx="9" stroke-width="0.6" data-page-node-id="g96QcMzlu3zOzYuFPKQfRJ"/>
+    <text class="bs" x="166" y="366" text-anchor="middle" dominant-baseline="central" fill="#0C447C" data-page-node-id="3MqXT210HyyQGFn48VEpQC">报表中心</text>
+  </g>
+  <g class="node c-blue" fill="#FFFFFF" stroke="#185FA5" data-page-node-id="QSAhgPB5r0VE3tqZdZaEKT">
+    <rect x="216" y="348" width="76" height="36" rx="9" stroke-width="0.6" data-page-node-id="AZ9Fpx7Gch8xLkzYH0m0Hg"/>
+    <text class="bs" x="254" y="366" text-anchor="middle" dominant-baseline="central" fill="#0C447C" data-page-node-id="e2eE1EbYOM2dy3qrbGsxGv">建模引擎</text>
+  </g>
+  <g class="node c-blue" fill="#FFFFFF" stroke="#185FA5" data-page-node-id="PRfKkqUwVlz6FFqmHvUdxe">
+    <rect x="304" y="348" width="76" height="36" rx="9" stroke-width="0.6" data-page-node-id="h58crLTnnSPQqJJkh36gYa"/>
+    <text class="bs" x="342" y="366" text-anchor="middle" dominant-baseline="central" fill="#0C447C" data-page-node-id="AuG9McG1b53QRLufpBxB1W">运维中心</text>
+  </g>
+  <path class="arr" d="M210,394 L210,414" stroke="#185FA5" stroke-width="1.4" marker-end="url(#arrow)" data-page-node-id="FDhJzDPq63pGUgtQtFe3pr"/>
+
+  <g class="node c-blue" fill="#E6F1FB" stroke="#185FA5" data-page-node-id="UAmNFR67B1Yr6MdnftF4dP">
+    <rect x="40" y="416" width="104" height="50" rx="9" stroke-width="0.6" data-page-node-id="5DrwQp5UjTkSaoGyTwBF7e"/>
+    <text class="bt" x="92" y="441" text-anchor="middle" dominant-baseline="central" fill="#0C447C" data-page-node-id="eiih6sIhXWFRS2DA8kUloU">通知中心</text>
+  </g>
+  <g class="node c-teal" fill="#E1F5EE" stroke="#0F6E56" data-page-node-id="RYSNlpjIE4B47B3qydq61T">
+    <rect x="158" y="416" width="104" height="50" rx="9" stroke-width="0.6" data-page-node-id="9d8G3iOHa0WPyr4BCIAEyM"/>
+    <text class="bt" x="210" y="441" text-anchor="middle" dominant-baseline="central" fill="#085041" data-page-node-id="zh5EKilmMLDCFNPB46g6UD">实时推送</text>
+  </g>
+  <g class="node c-blue" fill="#E6F1FB" stroke="#185FA5" data-page-node-id="JR7bo6GeYIhsjHIljgGN2f">
+    <rect x="276" y="416" width="104" height="50" rx="9" stroke-width="0.6" data-page-node-id="G2SDBMStyxbjMF69nBP7y1"/>
+    <text class="bt" x="328" y="441" text-anchor="middle" dominant-baseline="central" fill="#0C447C" data-page-node-id="2G0TkbTbTQE28YyMiAGrsY">审计日志</text>
+  </g>
+  <path class="arr" d="M210,466 L210,514" stroke="#185FA5" stroke-width="1.4" marker-end="url(#arrow)" data-page-node-id="9oMXPBO5ATBEAJ2TYnM19K"/>
+
+  <g class="node c-blue" fill="#FFFFFF" stroke="#185FA5" data-page-node-id="nHr4Fqlx3fAJE8MDBmB1ol">
+    <rect x="420" y="60" width="220" height="64" rx="12" stroke-width="0.6" data-page-node-id="c2Mzhp7L7UGmATQpABEpGG"/>
+    <text class="bt" x="530" y="84" text-anchor="middle" dominant-baseline="central" fill="#0C447C" data-page-node-id="24g2FCSsApMGJp7rf8l7ib">React 19 + AntD 5</text>
+    <text class="ts" x="530" y="106" text-anchor="middle" dominant-baseline="central" fill="#185FA5" data-page-node-id="miB9P1PxOJ2a6DfSIHqorq">TanStack Query + axios</text>
+  </g>
+  <path class="arr" d="M530,124 L530,144" stroke="#185FA5" stroke-width="1.4" marker-end="url(#arrow)" data-page-node-id="jmhLgMKb1rNzN1Ypq0HM0B"/>
+  <g class="node c-blue" fill="#FFFFFF" stroke="#185FA5" data-page-node-id="6lmLDB5WYxsCeAGjOQj4yQ">
+    <rect x="420" y="146" width="220" height="54" rx="12" stroke-width="0.6" data-page-node-id="aTzRQv8z03WiNTk6SPwKHY"/>
+    <text class="bt" x="530" y="173" text-anchor="middle" dominant-baseline="central" fill="#0C447C" data-page-node-id="cliEJ4hCpLyc069BJPrnb0">Nginx 托管 + /api 反代</text>
+  </g>
+  <path class="arr" d="M530,200 L530,220" stroke="#185FA5" stroke-width="1.4" marker-end="url(#arrow)" data-page-node-id="TbIESsAAVe0T5SFePhFEZq"/>
+  <g class="node c-blue" fill="#FFFFFF" stroke="#185FA5" data-page-node-id="NViqcsPY4RjZbOYpHlXkzG">
+    <rect x="420" y="222" width="220" height="70" rx="12" stroke-width="0.6" data-page-node-id="hGQBBQYy3FQh1gDaVq8Bhc"/>
+    <text class="bt" x="530" y="244" text-anchor="middle" dominant-baseline="central" fill="#0C447C" data-page-node-id="mgUMvnfzRr99OcZhOspDyP">API 网关中间件链</text>
+    <text class="bs" x="530" y="264" text-anchor="middle" dominant-baseline="central" fill="#185FA5" data-page-node-id="4ymS9Q7ej8D9NjlGQkjXVA">CORS·认证·审计·限流</text>
+    <text class="bs" x="530" y="282" text-anchor="middle" dominant-baseline="central" fill="#185FA5" data-page-node-id="ETcLfuxFgWv7sdX0WCktUq">上下文·安全头·优雅停机</text>
+  </g>
+  <path class="arr" d="M530,292 L530,312" stroke="#185FA5" stroke-width="1.4" marker-end="url(#arrow)" data-page-node-id="Fkye6qt6eBWdNK6GFiiyZq"/>
+  <g class="node c-blue" fill="#FFFFFF" stroke="#185FA5" data-page-node-id="gaoHZWMF3eBjPA35jRMtup">
+    <rect x="420" y="314" width="220" height="68" rx="12" stroke-width="0.6" data-page-node-id="Hc7jxAgsb8Sg7ev4uHdzOR"/>
+    <text class="bt" x="530" y="336" text-anchor="middle" dominant-baseline="central" fill="#0C447C" data-page-node-id="ZjoMUZFvP0Qe1FHXl958JQ">应用三层</text>
+    <text class="bs" x="530" y="356" text-anchor="middle" dominant-baseline="central" fill="#185FA5" data-page-node-id="XYxTX2hCZTeFKqi2yCWiCp">路由(RBAC)→服务(事务)</text>
+    <text class="bs" x="530" y="372" text-anchor="middle" dominant-baseline="central" fill="#185FA5" data-page-node-id="vOZwjswovyk5YeYHMeQjva">→仓储(防N+1)</text>
+  </g>
+  <path class="arr" d="M530,382 L530,396" stroke="#185FA5" stroke-width="1.4" marker-end="url(#arrow)" data-page-node-id="rMHfpzmshdwuaxyUeHKuWZ"/>
+  <g class="node c-teal" fill="#E1F5EE" stroke="#0F6E56" data-page-node-id="nY87f2qbl4H00p3oreDQeZ">
+    <rect x="420" y="398" width="220" height="58" rx="12" stroke-width="0.6" data-page-node-id="R2lcpR4sZ43Ew51gS0rIMu"/>
+    <text class="bt" x="530" y="422" text-anchor="middle" dominant-baseline="central" fill="#085041" data-page-node-id="AtFCbONjHG0BkGvqHRBYD8">SSE 实时通道</text>
+    <text class="bs" x="530" y="444" text-anchor="middle" dominant-baseline="central" fill="#0F6E56" data-page-node-id="tG99eELEqTebQ7HXYhg5bf">EventBus 每用户队列·心跳25s</text>
+  </g>
+  <path class="arr" d="M530,456 L530,514" stroke="#185FA5" stroke-width="1.4" marker-end="url(#arrow)" data-page-node-id="vlGV1wqXy36kZpzAG5s8KZ"/>
+
+  <path class="arr" d="M420,345 L380,345" stroke="#185FA5" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#arrow)" data-page-node-id="RB2V7xTuuVrKcGpQyie7t2"/>
+  <text class="ts" x="400" y="338" text-anchor="middle" fill="#185FA5" data-page-node-id="iTWL6VFLJ9IuQ2Sz9NHNtu">实现</text>
+
+  <path class="arr" d="M420,427 L404,427 L404,92 L416,92" stroke="#0F6E56" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#arrow)" data-page-node-id="icqdOfaKw33JIwPDOB0TBM"/>
+  <text class="ts" x="380" y="504" text-anchor="end" fill="#0F6E56" data-page-node-id="Njt4T5Z0EGzpyUE6J3Ifa9">SSE 实时推送至浏览器</text>
+
+  <g data-page-node-id="E7wFeglH75AGmYH18DqoLi">
+    <rect x="40" y="516" width="600" height="88" rx="14" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.6" data-page-node-id="dCeVhyYtwZRbQdxTwPxiK1"/>
+    <text class="bt" x="340" y="544" text-anchor="middle" dominant-baseline="central" fill="#0C447C" data-page-node-id="0XjZOtApZ4Dt2ZtD1iPx2f">数据底座</text>
+    <text class="ts" x="340" y="568" text-anchor="middle" dominant-baseline="central" fill="#185FA5" data-page-node-id="OXWwwQBpVu45CtKXFFWbqp">PostgreSQL(生产) / SQLite(开发)</text>
+    <text class="ts" x="340" y="590" text-anchor="middle" dominant-baseline="central" fill="#185FA5" data-page-node-id="DflPdukHeIsd5Fw3gFjYHb">Alembic 迁移 · uploads(local/S3) · refresh_tokens 表</text>
+  </g>
+</svg>
+</div>
+</body>
+</html>

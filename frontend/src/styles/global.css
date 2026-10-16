@@ -1,0 +1,709 @@
+/**
+ * 全局样式：品牌 CSS 变量 + 泛微式布局骨架 + 通用页面框架类
+ * 令牌来源见 src/theme/tokens.ts，此处镜像为 CSS 变量供样式表直接引用。
+ */
+
+:root {
+  --zk-brand-deep: #033b88;
+  --zk-brand-deep-hover: #044a9e;
+  --zk-brand-deep-active: #022a63;
+  --zk-brand-cyan: #2ba7d2;
+  --zk-brand-ink: #223a5d;
+  --zk-brand-gradient: linear-gradient(135deg, #044a9e 0%, #033b88 48%, #022a63 100%);
+
+  --zk-primary: #0d7fb8;
+  --zk-primary-hover: #2ba7d2;
+  --zk-primary-bg: #e6f4fb;
+
+  --zk-text: #1f2d3d;
+  --zk-text-secondary: #5a6b7f;
+  --zk-text-tertiary: #8a99ab;
+
+  --zk-bg-page: #f0f3f8;
+  --zk-bg-container: #ffffff;
+  --zk-bg-hover: #f2f7fc;
+  --zk-bg-selected: #e6f2fa;
+
+  --zk-border: #e3e9f0;
+  --zk-border-strong: #cbd5e1;
+
+  --zk-radius-sm: 4px;
+  --zk-radius: 6px;
+  --zk-radius-lg: 8px;
+  --zk-radius-xl: 12px;
+
+  --zk-shadow-xs: 0 1px 2px rgba(16, 36, 64, 0.06);
+  --zk-shadow-sm: 0 1px 4px rgba(16, 36, 64, 0.08);
+  --zk-shadow-md: 0 4px 12px rgba(16, 36, 64, 0.1);
+
+  --zk-header-h: 56px;
+  --zk-tabbar-h: 40px;
+  --zk-breadcrumb-h: 36px;
+  --zk-sider-w: 216px;
+  --zk-sider-collapsed-w: 64px;
+  --zk-content-pad: 16px;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--zk-bg-page);
+  color: var(--zk-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---------- 细滚动条 ---------- */
+.zk-scroll {
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(90, 107, 127, 0.35) transparent;
+}
+.zk-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.zk-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.zk-scroll::-webkit-scrollbar-thumb {
+  background: rgba(90, 107, 127, 0.28);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.zk-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(90, 107, 127, 0.5);
+  background-clip: content-box;
+}
+
+/* ---------- 应用外壳 ---------- */
+.zk-shell {
+  min-height: 100vh;
+  background: var(--zk-bg-page);
+}
+
+/* 顶部品牌栏 */
+.zk-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: var(--zk-header-h);
+  padding: 0 16px;
+  background: #fff;
+  border-bottom: 1px solid var(--zk-border);
+  box-shadow: 0 1px 4px rgba(16, 36, 64, 0.05);
+}
+/* 品牌色顶线：泛微式「一条品牌色压边」 */
+.zk-header::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--zk-brand-deep) 0%, var(--zk-brand-cyan) 55%, #6fbfe2 100%);
+}
+.zk-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding-right: 16px;
+  cursor: pointer;
+  user-select: none;
+}
+.zk-header__logo {
+  height: 30px;
+  width: auto;
+  display: block;
+}
+.zk-header__divider {
+  width: 1px;
+  height: 24px;
+  background: var(--zk-border);
+  margin: 0 4px;
+}
+.zk-header__product {
+  font-size: 13px;
+  color: var(--zk-text-secondary);
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+}
+.zk-header__nav {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.zk-header__nav::-webkit-scrollbar {
+  display: none;
+}
+.zk-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* 一级模块导航项 */
+.zk-module {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: var(--zk-radius);
+  font-size: 14px;
+  color: var(--zk-text-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.zk-module:hover {
+  color: var(--zk-primary);
+  background: var(--zk-bg-hover);
+}
+.zk-module--active {
+  color: var(--zk-primary);
+  background: var(--zk-bg-selected);
+  font-weight: 600;
+}
+.zk-module--active::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: -11px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--zk-primary);
+}
+
+/* 多页签栏 */
+.zk-tabbar {
+  position: sticky;
+  top: var(--zk-header-h);
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: var(--zk-tabbar-h);
+  padding: 0 8px;
+  background: #fff;
+  border-bottom: 1px solid var(--zk-border);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.zk-tabbar::-webkit-scrollbar {
+  display: none;
+}
+.zk-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--zk-border);
+  border-radius: var(--zk-radius);
+  background: #fff;
+  color: var(--zk-text-secondary);
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.zk-tab:hover {
+  color: var(--zk-primary);
+  border-color: #b7d9ea;
+  background: var(--zk-bg-hover);
+}
+.zk-tab--active {
+  color: #fff;
+  background: var(--zk-brand-deep);
+  border-color: var(--zk-brand-deep);
+  font-weight: 500;
+}
+.zk-tab--active:hover {
+  color: #fff;
+  background: var(--zk-brand-deep-hover);
+  border-color: var(--zk-brand-deep-hover);
+}
+.zk-tab__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--zk-brand-cyan);
+  flex-shrink: 0;
+}
+.zk-tab--active .zk-tab__dot {
+  background: #7fd4f0;
+}
+.zk-tab__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  font-size: 10px;
+  opacity: 0.55;
+}
+.zk-tab__close:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.12);
+}
+.zk-tab--active .zk-tab__close:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+.zk-tabbar__tools {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-left: 8px;
+  background: #fff;
+  position: sticky;
+  right: 0;
+}
+
+/* 左侧二级菜单 */
+.zk-sider {
+  position: sticky;
+  top: calc(var(--zk-header-h) + var(--zk-tabbar-h));
+  height: calc(100vh - var(--zk-header-h) - var(--zk-tabbar-h));
+  width: var(--zk-sider-w);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--zk-brand-gradient);
+  transition: width 0.2s ease;
+}
+.zk-sider--collapsed {
+  width: var(--zk-sider-collapsed-w);
+}
+.zk-sider__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 16px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+.zk-sider--collapsed .zk-sider__title {
+  justify-content: center;
+  padding: 0;
+}
+.zk-sider__menu {
+  flex: 1;
+  padding: 8px 0;
+  border-inline-end: none !important;
+}
+.zk-sider__menu.ant-menu-dark .ant-menu-item-selected {
+  box-shadow: inset 3px 0 0 var(--zk-brand-cyan);
+}
+.zk-sider__foot {
+  padding: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+/* 内容区 */
+.zk-body {
+  display: flex;
+  align-items: flex-start;
+  min-height: calc(100vh - var(--zk-header-h) - var(--zk-tabbar-h));
+}
+.zk-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - var(--zk-header-h) - var(--zk-tabbar-h));
+}
+.zk-breadcrumb {
+  display: flex;
+  align-items: center;
+  height: var(--zk-breadcrumb-h, 36px);
+  padding: 0 var(--zk-content-pad);
+  background: #fff;
+  border-bottom: 1px solid var(--zk-border);
+  flex-shrink: 0;
+}
+.zk-content {
+  flex: 1;
+  padding: var(--zk-content-pad);
+  min-width: 0;
+}
+.zk-pane {
+  height: 100%;
+}
+
+/* ---------- 页面框架 ---------- */
+.zk-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.zk-page__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.zk-page__heading {
+  min-width: 0;
+}
+.zk-page__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 26px;
+  color: var(--zk-text);
+}
+.zk-page__desc {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--zk-text-secondary);
+  line-height: 20px;
+}
+.zk-page__extra {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* 卡片容器 */
+.zk-card {
+  background: #fff;
+  border: 1px solid var(--zk-border);
+  border-radius: var(--zk-radius-lg);
+  box-shadow: var(--zk-shadow-xs);
+}
+.zk-card--flush {
+  padding: 0;
+}
+.zk-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--zk-border);
+}
+.zk-card__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--zk-text);
+}
+.zk-card__title::before {
+  content: "";
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--zk-primary);
+}
+.zk-card__extra {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.zk-card__body {
+  padding: 16px;
+}
+.zk-card__body--tight {
+  padding: 0;
+}
+
+/* 筛选/工具栏 */
+.zk-filterbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  background: #fff;
+  border: 1px solid var(--zk-border);
+  border-radius: var(--zk-radius-lg);
+  box-shadow: var(--zk-shadow-xs);
+}
+.zk-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.zk-toolbar__spacer {
+  flex: 1;
+}
+
+/* 指标卡 */
+.zk-stat {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid var(--zk-border);
+  border-radius: var(--zk-radius-lg);
+  box-shadow: var(--zk-shadow-xs);
+  overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.zk-stat:hover {
+  box-shadow: var(--zk-shadow-md);
+  transform: translateY(-1px);
+}
+.zk-stat__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--zk-radius-lg);
+  font-size: 20px;
+  flex-shrink: 0;
+  color: #fff;
+  background: linear-gradient(135deg, var(--zk-brand-cyan), var(--zk-brand-deep));
+}
+.zk-stat__label {
+  font-size: 13px;
+  color: var(--zk-text-secondary);
+  line-height: 20px;
+}
+.zk-stat__value {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 30px;
+  color: var(--zk-text);
+  font-variant-numeric: tabular-nums;
+}
+.zk-stat__suffix {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--zk-text-tertiary);
+  margin-left: 4px;
+}
+
+/* 空态 */
+.zk-empty {
+  padding: 40px 0;
+  text-align: center;
+}
+
+/* 门户横幅 */
+.zk-banner {
+  position: relative;
+  padding: 20px 24px;
+  border-radius: var(--zk-radius-xl);
+  background: var(--zk-brand-gradient);
+  color: #fff;
+  overflow: hidden;
+}
+.zk-banner::after {
+  content: "";
+  position: absolute;
+  right: -40px;
+  top: -60px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(43, 167, 210, 0.55) 0%, transparent 68%);
+}
+.zk-banner__title {
+  position: relative;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+}
+.zk-banner__sub {
+  position: relative;
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.82);
+}
+.zk-banner__actions {
+  position: relative;
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* 链接型文本 */
+.zk-link {
+  color: var(--zk-primary);
+  cursor: pointer;
+}
+.zk-link:hover {
+  color: var(--zk-primary-hover);
+}
+
+/* 表格铺满卡片：去掉重复边框 */
+.zk-card__body--tight .ant-table-wrapper .ant-table {
+  border-radius: 0 0 var(--zk-radius-lg) var(--zk-radius-lg);
+}
+
+/* ---------- 登录页 ---------- */
+.zk-login {
+  display: flex;
+  min-height: 100vh;
+  background: var(--zk-bg-page);
+}
+.zk-login__brand {
+  position: relative;
+  flex: 1.1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  background: var(--zk-brand-gradient);
+  overflow: hidden;
+}
+.zk-login__brand::after {
+  content: "";
+  position: absolute;
+  right: -120px;
+  bottom: -140px;
+  width: 460px;
+  height: 460px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(43, 167, 210, 0.5) 0%, transparent 68%);
+}
+.zk-login__brand::before {
+  content: "";
+  position: absolute;
+  left: -80px;
+  top: -100px;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(43, 167, 210, 0.28) 0%, transparent 70%);
+}
+.zk-login__brand-inner {
+  position: relative;
+  max-width: 460px;
+}
+.zk-login__logo {
+  height: 52px;
+  width: auto;
+}
+.zk-login__slogan {
+  margin: 28px 0 0;
+  color: #fff;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+.zk-login__desc {
+  margin: 12px 0 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 14px;
+  line-height: 24px;
+}
+.zk-login__features {
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.zk-login__features li {
+  position: relative;
+  padding-left: 20px;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 13px;
+  line-height: 30px;
+}
+.zk-login__features li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 12px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--zk-brand-cyan);
+}
+.zk-login__panel {
+  flex: 0.9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+.zk-login__card {
+  width: 100%;
+  max-width: 400px;
+  border-radius: var(--zk-radius-xl);
+  box-shadow: var(--zk-shadow-md);
+}
+.zk-login__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.zk-login__head-icon {
+  font-size: 28px;
+  color: var(--zk-primary);
+}
+.zk-login__foot {
+  margin-top: 20px;
+  font-size: 12px;
+  color: var(--zk-text-tertiary);
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  :root {
+    --zk-content-pad: 8px;
+  }
+  .zk-header {
+    padding: 0 10px;
+  }
+  .zk-header__product {
+    display: none;
+  }
+  .zk-content {
+    padding: 8px;
+  }
+}
+
+/* 打印：隐藏导航，只留内容 */
+@media print {
+  .zk-header,
+  .zk-tabbar,
+  .zk-sider,
+  .zk-breadcrumb {
+    display: none !important;
+  }
+}

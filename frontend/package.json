@@ -1,0 +1,32 @@
+{
+  "name": "zk-oa-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "test:nav": "tsc src/layouts/menuModel.ts --outDir .test-build --module esnext --target es2020 --moduleResolution bundler --skipLibCheck --jsx react-jsx && node tests/menuModel.test.mjs",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^5.5.1",
+    "@tanstack/react-query": "^5.59.0",
+    "@xyflow/react": "^12.3.5",
+    "antd": "^5.22.0",
+    "axios": "^1.7.7",
+    "echarts": "^5.6.0",
+    "echarts-for-react": "^3.0.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^6.27.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.3",
+    "typescript": "^5.6.2",
+    "vite": "^6.0.0"
+  }
+}

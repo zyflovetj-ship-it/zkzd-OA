@@ -1,0 +1,29 @@
+# 构建上下文过滤：.venv 约 176MB，且含宿主机（openharmony/aarch64）二进制，
+# 拷入 python:3.12-slim 镜像既臃肿又无意义；开发库与上传件也不应进镜像。
+.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+
+# 本地开发数据库与日志（生产用 PostgreSQL）
+*.db
+*.sqlite
+*.sqlite3
+.uvicorn.log
+.alembic.log
+
+# 运行时上传目录（生产应挂卷或改用 S3）
+uploads
+
+# 环境与本地配置（生产变量由 compose 注入）
+.env
+.env.*
+!.env.example
+
+.git
+.gitignore
+.vscode
+.idea
+.DS_Store
+*.log

@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>中科智电 OA 系统 · 功能汇报</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  /* ============ 设计令牌 ============ */
+  :root{
+    --deep:#0b2f5c;        /* 深蓝 */
+    --tech:#0077be;        /* 科技蓝 */
+    --tech-soft:#3aa0e0;
+    --bg:#f5f9fe;          /* 浅灰蓝背景 */
+    --ink:#0b2f5c;
+    --muted:#5a6b82;
+    --card:rgba(255,255,255,0.74);
+    --card-solid:#ffffff;
+    --line:rgba(11,47,92,0.10);
+    --glow:rgba(0,119,190,0.18);
+    --ok:#1f9d6b;
+    --plan:#e08600;
+    --shadow:0 10px 30px rgba(11,47,92,0.10);
+    --shadow-hover:0 18px 48px rgba(0,119,190,0.22);
+    --radius:20px;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:'Inter','PingFang SC','Microsoft YaHei',system-ui,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ============ 全局背景：极淡网格 + 微光晕 ============ */
+  .bg-layer{
+    position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(900px 600px at 12% -8%, rgba(0,119,190,0.14), transparent 60%),
+      radial-gradient(800px 600px at 100% 110%, rgba(11,47,92,0.14), transparent 55%),
+      linear-gradient(180deg,#eaf3fc 0%, #f5f9fe 45%, #eef5fd 100%);
+  }
+  .bg-grid{
+    position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.5;
+    background-image:
+      linear-gradient(rgba(11,47,92,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(11,47,92,0.05) 1px, transparent 1px);
+    background-size:38px 38px;
+    mask-image:radial-gradient(120% 120% at 50% 30%, #000 55%, transparent 100%);
+    -webkit-mask-image:radial-gradient(120% 120% at 50% 30%, #000 55%, transparent 100%);
+  }
+
+  /* ============ 翻页容器 ============ */
+  .viewport{position:fixed;inset:0;z-index:1;overflow:hidden;}
+  .track{display:flex;height:100%;transition:transform .55s cubic-bezier(.22,.61,.36,1);}
+  .slide{
+    flex:0 0 100vw;height:100vh;height:100dvh;
+    display:flex;flex-direction:column;justify-content:center;align-items:center;
+    padding:clamp(18px,4vw,64px);
+    overflow-y:auto;
+  }
+  .wrap{width:min(1180px,100%);}
+
+  /* ============ 通用玻璃卡片 ============ */
+  .glass{
+    background:var(--card);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border:1px solid rgba(255,255,255,0.65);
+    box-shadow:var(--shadow);
+    border-radius:var(--radius);
+  }
+  .card{
+    background:var(--card-solid);
+    border:1px solid var(--line);
+    border-radius:16px;
+    box-shadow:var(--shadow);
+    padding:22px;
+    transition:transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+  }
+  .card:hover{transform:translateY(-6px);box-shadow:var(--shadow-hover);border-color:rgba(0,119,190,0.35);}
+
+  /* ============ 文字层级 ============ */
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--tech);margin-bottom:14px;
+  }
+  .eyebrow::before{content:"";width:26px;height:2px;background:var(--tech);border-radius:2px;}
+  h1.title{font-size:clamp(30px,5vw,56px);font-weight:900;line-height:1.08;letter-spacing:-.02em;}
+  h2.head{font-size:clamp(24px,3.4vw,38px);font-weight:800;letter-spacing:-.01em;margin-bottom:6px;}
+  .sub{color:var(--muted);font-size:clamp(14px,1.6vw,17px);font-weight:500;}
+  .grad{background:linear-gradient(120deg,var(--deep),var(--tech));-webkit-background-clip:text;background-clip:text;color:transparent;}
+
+  /* ============ 封面 ============ */
+  .brand{display:flex;align-items:center;gap:16px;margin-bottom:30px;}
+  .logo{
+    width:62px;height:62px;border-radius:16px;flex:0 0 auto;
+    background:linear-gradient(135deg,var(--deep),var(--tech));
+    display:flex;align-items:center;justify-content:center;color:#fff;
+    box-shadow:0 10px 28px rgba(0,119,190,0.35);
+  }
+  .cover-meta{display:flex;gap:26px;flex-wrap:wrap;margin-top:30px;color:var(--muted);font-weight:500;font-size:15px;}
+  .cover-meta b{color:var(--ink);font-weight:700;}
+
+  /* ============ 网格布局 ============ */
+  .grid{display:grid;gap:18px;}
+  .g3{grid-template-columns:repeat(3,1fr);}
+  .g2{grid-template-columns:repeat(2,1fr);}
+  .g6{grid-template-columns:repeat(3,1fr);}
+  @media(max-width:880px){.g3,.g2,.g6{grid-template-columns:1fr;}}
+
+  /* 模块卡片 */
+  .mod{padding:20px;display:flex;flex-direction:column;gap:10px;min-height:170px;}
+  .mod .ico{
+    width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,rgba(11,47,92,0.10),rgba(0,119,190,0.16));color:var(--tech);
+  }
+  .mod h3{font-size:18px;font-weight:700;}
+  .mod p{font-size:13.5px;color:var(--muted);line-height:1.55;}
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:.02em;}
+  .tag.ok{background:rgba(31,157,107,0.12);color:var(--ok);}
+  .tag.plan{background:rgba(224,134,0,0.13);color:var(--plan);}
+  .feat-list{list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;}
+  .feat-list li{font-size:11.5px;color:var(--muted);background:rgba(11,47,92,0.05);border:1px solid var(--line);padding:3px 8px;border-radius:8px;}
+
+  /* ============ 核心流程（请假审批）============ */
+  .flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin-top:8px;}
+  .node{
+    flex:1 1 200px;min-width:180px;background:var(--card-solid);border:1px solid var(--line);
+    border-radius:16px;padding:18px;box-shadow:var(--shadow);position:relative;
+    transition:transform .25s ease, box-shadow .25s ease;
+  }
+  .node:hover{transform:translateY(-5px);box-shadow:var(--shadow-hover);}
+  .node .step{font-size:12px;font-weight:800;color:var(--tech);letter-spacing:.08em;}
+  .node h4{font-size:16px;font-weight:700;margin:6px 0 6px;}
+  .node p{font-size:12.5px;color:var(--muted);line-height:1.5;}
+  .arrow{display:flex;align-items:center;justify-content:center;color:var(--tech);font-size:26px;font-weight:800;flex:0 0 40px;}
+  @media(max-width:880px){.arrow{flex-basis:100%;transform:rotate(90deg);height:30px;}}
+
+  /* ============ 角色与权限 ============ */
+  .role{display:flex;flex-direction:column;gap:8px;padding:20px;}
+  .role .badge{font-size:12px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--deep),var(--tech));align-self:flex-start;padding:4px 12px;border-radius:999px;}
+  .role ul{list-style:none;display:flex;flex-direction:column;gap:7px;margin-top:4px;}
+  .role li{font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:flex-start;}
+  .role li svg{flex:0 0 16px;color:var(--tech);margin-top:2px;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;overflow:hidden;border-radius:14px;}
+  th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--line);}
+  thead th{background:linear-gradient(135deg,rgba(11,47,92,0.06),rgba(0,119,190,0.08));font-weight:700;color:var(--deep);}
+  tbody tr:hover{background:rgba(0,119,190,0.04);}
+  .yes{color:var(--ok);font-weight:800;}
+  .no{color:#b9c2d0;font-weight:700;}
+
+  /* ============ 建设规划 ============ */
+  .phase{display:flex;flex-direction:column;gap:8px;padding:22px;position:relative;overflow:hidden;}
+  .phase .ph{font-size:13px;font-weight:800;color:var(--tech);letter-spacing:.06em;}
+  .phase h3{font-size:20px;font-weight:800;}
+  .phase p{font-size:13px;color:var(--muted);line-height:1.55;}
+  .phase .dot{position:absolute;right:-20px;top:-20px;width:90px;height:90px;border-radius:50%;background:radial-gradient(circle,rgba(0,119,190,0.16),transparent 70%);}
+
+  /* ============ 预期收益 ============ */
+  .kpi{padding:24px;text-align:center;}
+  .kpi .num{font-size:clamp(30px,4.5vw,46px);font-weight:900;line-height:1;letter-spacing:-.02em;}
+  .kpi .lab{font-size:13.5px;color:var(--muted);margin-top:10px;font-weight:500;}
+
+  /* ============ 结束页 ============ */
+  .next-steps{display:flex;flex-direction:column;gap:12px;margin-top:6px;}
+  .ns{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;}
+  .ns .n{width:30px;height:30px;flex:0 0 auto;border-radius:9px;background:linear-gradient(135deg,var(--deep),var(--tech));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;}
+  .ns h4{font-size:15px;font-weight:700;}
+  .ns p{font-size:13px;color:var(--muted);}
+  .contact{margin-top:26px;display:flex;gap:24px;flex-wrap:wrap;color:var(--muted);font-size:14px;}
+  .contact b{color:var(--ink);}
+
+  /* ============ 导航控件 ============ */
+  .topbar{position:fixed;top:0;left:0;right:0;height:5px;z-index:30;background:rgba(11,47,92,0.06);}
+  .topbar .fill{height:100%;width:12.5%;background:linear-gradient(90deg,var(--deep),var(--tech));transition:width .4s ease,margin-left .4s ease;}
+  .nav{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:30;display:flex;align-items:center;gap:14px;
+    background:rgba(255,255,255,0.8);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,0.7);box-shadow:var(--shadow);padding:10px 14px;border-radius:999px;}
+  .nav button{width:42px;height:42px;border:none;cursor:pointer;border-radius:50%;background:linear-gradient(135deg,var(--deep),var(--tech));color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;transition:transform .2s ease, box-shadow .2s ease;}
+  .nav button:hover{transform:scale(1.08);box-shadow:var(--shadow-hover);}
+  .nav button:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none;}
+  .dots{display:flex;gap:8px;align-items:center;}
+  .dots .d{width:9px;height:9px;border-radius:50%;background:rgba(11,47,92,0.22);cursor:pointer;transition:all .25s ease;}
+  .dots .d.active{width:24px;border-radius:6px;background:linear-gradient(90deg,var(--deep),var(--tech));}
+  .pageno{font-size:13px;font-weight:700;color:var(--muted);min-width:54px;text-align:center;}
+  .hint{position:fixed;bottom:22px;right:22px;z-index:30;font-size:12px;color:var(--muted);background:rgba(255,255,255,0.7);padding:6px 12px;border-radius:999px;border:1px solid var(--line);}
+  @media(max-width:640px){.hint{display:none;}}
+
+  .section-foot{margin-top:18px;color:var(--muted);font-size:13px;}
+  svg{display:block;}
+</style>
+</head>
+<body>
+  <div class="bg-layer"></div>
+  <div class="bg-grid"></div>
+  <div class="topbar"><div class="fill" id="prog"></div></div>
+
+  <div class="viewport">
+    <div class="track" id="track">
+
+      <!-- ============ 0 封面 ============ -->
+      <section class="slide">
+        <div class="wrap" style="text-align:center;display:flex;flex-direction:column;align-items:center;">
+          <div class="brand">
+            <div class="logo">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4"/><path d="M12 11v10"/></svg>
+            </div>
+            <div style="text-align:left;">
+              <div style="font-size:13px;font-weight:700;letter-spacing:.18em;color:var(--tech);">ZHONGKE · OA PLATFORM</div>
+              <div style="font-size:13px;color:var(--muted);font-weight:500;">中科智电（江苏）能源有限公司</div>
+            </div>
+          </div>
+          <div class="eyebrow" style="margin:0 auto 14px;">产品功能汇报 · V1.0</div>
+          <h1 class="title">中科智电 <span class="grad">OA 系统</span></h1>
+          <p class="sub" style="margin-top:16px;max-width:640px;">统一办公入口 · 流程线上化 · 数据可追溯 · 协作高效化</p>
+          <div class="cover-meta">
+            <div>汇报人：<b>技术部 · Elvis</b></div>
+            <div>日期：<b>2026-09-29</b></div>
+            <div>基线：<b>zk-oa 全栈实现</b></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 1 项目背景与目标 ============ -->
+      <section class="slide">
+        <div class="wrap">
+          <div class="eyebrow">项目背景与目标</div>
+          <h2 class="head">为什么要建 OA 系统</h2>
+          <p class="sub" style="margin:14px 0 26px;max-width:780px;line-height:1.7;">
+            中科智电业务覆盖电力交易、AI 算法与能源管理，团队规模持续扩大。当前审批、考勤、报销、公告等信息分散在微信群、线下表格与零散系统中，存在
+            <b style="color:var(--ink)">流程不可追溯、协作效率低、数据口径不统一</b>三大痛点。OA 系统将替代分散的审批流程与信息孤岛，实现统一线上办公。
+          </p>
+          <div class="grid g3">
+            <div class="card">
+              <div class="ico" style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(11,47,92,0.10),rgba(0,119,190,0.16));color:var(--tech);margin-bottom:12px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>
+              </div>
+              <h3 style="font-size:18px;font-weight:700;margin-bottom:8px;">流程线上化</h3>
+              <p style="font-size:13.5px;color:var(--muted);line-height:1.55;">请假、报销、采购、用印、合同等审批全部在线发起与流转，告别线下签字。</p>
+            </div>
+            <div class="card">
+              <div class="ico" style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(11,47,92,0.10),rgba(0,119,190,0.16));color:var(--tech);margin-bottom:12px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+              </div>
+              <h3 style="font-size:18px;font-weight:700;margin-bottom:8px;">数据可追溯</h3>
+              <p style="font-size:13.5px;color:var(--muted);line-height:1.55;">每笔审批、每次操作均留痕，支持审计回溯与责任定位。</p>
+            </div>
+            <div class="card">
+              <div class="ico" style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(11,47,92,0.10),rgba(0,119,190,0.16));color:var(--tech);margin-bottom:12px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <h3 style="font-size:18px;font-weight:700;margin-bottom:8px;">协作高效化</h3>
+              <p style="font-size:13.5px;color:var(--muted);line-height:1.55;">待办统一汇聚、消息实时触达、文档集中管理，降低沟通成本。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 2 功能总览（六大模块）============ -->
+      <section class="slide">
+        <div class="wrap">
+          <div class="eyebrow">功能总览</div>
+          <h2 class="head">六大功能模块</h2>
+          <p class="sub" style="margin:12px 0 22px;">覆盖全员日常办公全场景，已落地能力以绿色标记，规划能力以橙色标记。</p>
+          <div class="grid g6">
+            <div class="card mod">
+              <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg></div>
+              <h3>首页工作台</h3>
+              <p>待办 / 已办 / 我发起，公告消息与数据概览一屏聚合。</p>
+              <span class="tag ok">✅ 已落地</span>
+              <ul class="feat-list"><li>待办聚合</li><li>消息中心</li><li>概览卡片</li></ul>
+            </div>
+            <div class="card mod">
+              <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M21 12v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11"/></svg></div>
+              <h3>流程审批</h3>
+              <p>通用工作流引擎，支持多级 / 会签 / 加签 / 转办 / 撤回 / 催办。</p>
+              <span class="tag ok">✅ 核心已落地</span>
+              <ul class="feat-list"><li>请假</li><li>报销</li><li>采购</li><li>用印/合同</li></ul>
+            </div>
+            <div class="card mod">
+              <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg></div>
+              <h3>人事管理</h3>
+              <p>员工档案、组织架构、考勤打卡、假期余额自动扣减。</p>
+              <span class="tag ok">✅ 已落地</span>
+              <ul class="feat-list"><li>档案/组织</li><li>考勤</li><li>假期余额</li></ul>
+            </div>
+            <div class="card mod">
+              <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg></div>
+              <h3>行政办公</h3>
+              <p>公告回执、文档中心版本管理，会议/车辆/用品流程可配置。</p>
+              <span class="tag plan">🟡 部分规划</span>
+              <ul class="feat-list"><li>公告回执</li><li>文档中心</li><li>会议/车辆</li></ul>
+            </div>
+            <div class="card mod">
+              <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+              <h3>财务管理</h3>
+              <p>报销单全生命周期、费用统计与预算对比，借款发票规划中。</p>
+              <span class="tag ok">✅ 报销已落地</span>
+              <ul class="feat-list"><li>报销打款</li><li>费用统计</li><li>发票/借款</li></ul>
+            </div>
+            <div class="card mod">
+              <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+              <h3>系统管理</h3>
+              <p>用户 / 角色 / 权限、流程配置、操作日志与审计全覆盖。</p>
+              <span class="tag ok">✅ 已落地</span>
+              <ul class="feat-list"><li>RBAC</li><li>流程定义</li><li>审计日志</li></ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 3 核心流程演示（请假审批）============ -->
+      <section class="slide">
+        <div class="wrap">
+          <div class="eyebrow">核心流程演示</div>
+          <h2 class="head">以「请假审批」为例</h2>
+          <p class="sub" style="margin:12px 0 22px;">发起 → 多级审批（含会签）→ 假期扣减 → 归档，全程节点留痕与实时消息通知。</p>
+          <div class="flow">
+            <div class="node">
+              <div class="step">STEP 01</div>
+              <h4>发起申请</h4>
+              <p>员工选择事假 / 病假 / 年假 / 调休，填写时间与事由，系统校验假期余额。</p>
+            </div>
+            <div class="arrow">→</div>
+            <div class="node">
+              <div class="step">STEP 02</div>
+              <h4>审批流转</h4>
+              <p>自动进入工作流，部门负责人审批；支持会签、加签、转办、催办。</p>
+            </div>
+            <div class="arrow">→</div>
+            <div class="node">
+              <div class="step">STEP 03</div>
+              <h4>假期扣减</h4>
+              <p>审批通过后自动扣减对应假期余额，余额不足时拦截提交。</p>
+            </div>
+            <div class="arrow">→</div>
+            <div class="node">
+              <div class="step">STEP 04</div>
+              <h4>归档通知</h4>
+              <p>流程置终态并归档，实时消息通知申请人，全过程写入审计日志。</p>
+            </div>
+          </div>
+          <div class="glass" style="margin-top:22px;padding:18px 20px;display:flex;flex-wrap:wrap;gap:18px;align-items:center;">
+            <div style="display:flex;align-items:center;gap:9px;font-size:13px;color:var(--muted);font-weight:600;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--tech)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/></svg>
+              撤回（运行中退回草稿）
+            </div>
+            <div style="display:flex;align-items:center;gap:9px;font-size:13px;color:var(--muted);font-weight:600;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--tech)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/></svg>
+              转办（改派留痕）
+            </div>
+            <div style="display:flex;align-items:center;gap:9px;font-size:13px;color:var(--muted);font-weight:600;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--tech)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8"/></svg>
+              超时自动升级（SLA 3 天）
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 4 角色与权限 ============ -->
+      <section class="slide">
+        <div class="wrap">
+          <div class="eyebrow">角色与权限</div>
+          <h2 class="head">三档角色 · 细粒度 RBAC</h2>
+          <p class="sub" style="margin:12px 0 22px;">基于角色的访问控制，权限码以「模块:动作」表达，新增能力按查看 / 管理两级发放。</p>
+          <div class="grid g3" style="margin-bottom:22px;">
+            <div class="card role">
+              <span class="badge">管理员</span>
+              <ul>
+                <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>全部权限（org/wf/att/expense/doc/audit）</li>
+                <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>用户 / 角色 / 流程配置</li>
+                <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>审计日志与运维中心</li>
+              </ul>
+            </div>
+            <div class="card role">
+              <span class="badge">部门负责人</span>
+              <ul>
+                <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>审批本部门待办</li>
+                <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>团队考勤 / 费用统计</li>
+                <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>发布公告 / 组织级看板</li>
+              </ul>
+            </div>
+            <div class="card role">
+              <span class="badge">普通员工</span>
+              <ul>
+                <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>发起请假 / 报销 / 采购</li>
+                <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>查看自身数据与文档</li>
+                <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>消息中心与待办处理</li>
+              </ul>
+            </div>
+          </div>
+          <div class="card" style="padding:0;overflow:hidden;">
+            <table>
+              <thead><tr><th>功能</th><th>员工</th><th>负责人</th><th>管理员</th></tr></thead>
+              <tbody>
+                <tr><td>发起请假 / 报销 / 采购 / 用印 / 合同</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+                <tr><td>审批待办（本部门）</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+                <tr><td>查看团队考勤 / 费用统计</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+                <tr><td>发布公告 / 公文</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+                <tr><td>文档上传 / 管理</td><td class="yes">上传</td><td class="yes">管理</td><td class="yes">管理</td></tr>
+                <tr><td>用户 / 角色 / 权限 / 流程配置</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
+                <tr><td>操作日志 / 审计查看</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 5 建设规划（三期）============ -->
+      <section class="slide">
+        <div class="wrap">
+          <div class="eyebrow">建设规划</div>
+          <h2 class="head">分三期稳健交付</h2>
+          <p class="sub" style="margin:12px 0 24px;">从核心流程跑通，到人事行政一体化，再到财务分析与系统对接。</p>
+          <div class="grid g3">
+            <div class="card phase">
+              <div class="dot"></div>
+              <div class="ph">一期 · 核心流程</div>
+              <h3>流程线上化跑通</h3>
+              <p>认证 / RBAC、通用工作流引擎、请假 / 报销 / 公文、门户工作台、消息中心、实时推送（SSE）。</p>
+              <span class="tag ok" style="align-self:flex-start;margin-top:6px;">✅ 已交付</span>
+            </div>
+            <div class="card phase">
+              <div class="dot"></div>
+              <div class="ph">二期 · 人事行政</div>
+              <h3>人事行政一体化</h3>
+              <p>考勤、假期余额、公告回执、文档中心、采购 / 用印 / 会议室等流程定义配置与冲突检测增强。</p>
+              <span class="tag plan" style="align-self:flex-start;margin-top:6px;">🟡 进行中</span>
+            </div>
+            <div class="card phase">
+              <div class="dot"></div>
+              <div class="ph">三期 · 财务与数据分析</div>
+              <h3>数据可追溯 + 决策支撑</h3>
+              <p>借款还款、发票台账、预算对比、报表中心增强、企业微信 / 钉钉 SSO 与财务系统对接。</p>
+              <span class="tag plan" style="align-self:flex-start;margin-top:6px;">⬜ 规划</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 6 预期收益 ============ -->
+      <section class="slide">
+        <div class="wrap">
+          <div class="eyebrow">预期收益</div>
+          <h2 class="head">上线后的可量化价值</h2>
+          <p class="sub" style="margin:12px 0 24px;">以下为系统全面推广后的预期目标指标（基于流程线上化与数据集中管理推导）。</p>
+          <div class="grid g3">
+            <div class="card kpi"><div class="num grad">100%</div><div class="lab">审批流程线上化覆盖率</div></div>
+            <div class="card kpi"><div class="num grad">↓ 40%</div><div class="lab">平均审批耗时（目标）</div></div>
+            <div class="card kpi"><div class="num grad">100%</div><div class="lab">关键操作可审计追溯</div></div>
+            <div class="card kpi"><div class="num grad">↑ 35%</div><div class="lab">跨部门协作效率（目标）</div></div>
+            <div class="card kpi"><div class="num grad">0</div><div class="lab">线下签字纸张浪费</div></div>
+            <div class="card kpi"><div class="num grad">实时</div><div class="lab">待办 / 消息触达（SSE）</div></div>
+          </div>
+          <p class="section-foot">注：指标为预期目标值，实际收益在推广后按季度复盘校准。</p>
+        </div>
+      </section>
+
+      <!-- ============ 7 结束页 ============ -->
+      <section class="slide">
+        <div class="wrap">
+          <div class="eyebrow">下一步计划</div>
+          <h2 class="head">从汇报到落地</h2>
+          <div class="next-steps" style="margin-top:20px;">
+            <div class="card ns"><div class="n">1</div><div><h4>确认需求基线</h4><p>管理层评审本 PRD 与功能汇报，确认六大模块范围与三期节奏。</p></div></div>
+            <div class="card ns"><div class="n">2</div><div><h4>补齐规划模块</h4><p>配置采购 / 用印 / 合同 / 会议 / 车辆等流程定义，建设借款还款与发票台账。</p></div></div>
+            <div class="card ns"><div class="n">3</div><div><h4>对接与推广</h4><p>接入企业微信 / 钉钉 SSO 与财务系统，组织全员培训与推广。</p></div></div>
+          </div>
+          <div class="contact">
+            <div>负责人：<b>技术部 · Elvis</b></div>
+            <div>系统代号：<b>zk-oa</b></div>
+            <div>文档：<b>中科智电OA系统_PRD.md</b></div>
+          </div>
+          <p class="section-foot">感谢阅读 · 中科智电 OA 系统功能汇报 V1.0</p>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ============ 导航 ============ -->
+  <nav class="nav">
+    <button id="prev" aria-label="上一页">‹</button>
+    <div class="dots" id="dots"></div>
+    <span class="pageno" id="pageno">1 / 8</span>
+    <button id="next" aria-label="下一页">›</button>
+  </nav>
+  <div class="hint">← → 方向键翻页</div>
+
+<script>
+  // ====== 翻页逻辑（无外部依赖）======
+  (function(){
+    var track = document.getElementById('track');
+    var slides = track.children;
+    var total = slides.length;
+    var idx = 0;
+    var prev = document.getElementById('prev');
+    var next = document.getElementById('next');
+    var dots = document.getElementById('dots');
+    var pageno = document.getElementById('pageno');
+    var prog = document.getElementById('prog');
+
+    // 生成圆点
+    for(var i=0;i<total;i++){
+      var d = document.createElement('span');
+      d.className = 'd' + (i===0?' active':'');
+      d.setAttribute('data-i', i);
+      dots.appendChild(d);
+    }
+    var dotEls = dots.children;
+
+    function render(){
+      track.style.transform = 'translateX(' + (-idx*100) + 'vw)';
+      pageno.textContent = (idx+1) + ' / ' + total;
+      prog.style.width = ((idx+1)/total*100) + '%';
+      prev.disabled = (idx===0);
+      next.disabled = (idx===total-1);
+      for(var i=0;i<dotEls.length;i++){
+        dotEls[i].className = 'd' + (i===idx?' active':'');
+      }
+    }
+    function go(n){ idx = Math.max(0, Math.min(total-1, n)); render(); }
+
+    prev.addEventListener('click', function(){ go(idx-1); });
+    next.addEventListener('click', function(){ go(idx+1); });
+    dots.addEventListener('click', function(e){
+      var t = e.target;
+      if(t && t.getAttribute('data-i')){ go(parseInt(t.getAttribute('data-i'),10)); }
+    });
+    document.addEventListener('keydown', function(e){
+      if(e.key==='ArrowRight' || e.key==='PageDown'){ go(idx+1); }
+      else if(e.key==='ArrowLeft' || e.key==='PageUp'){ go(idx-1); }
+      else if(e.key==='Home'){ go(0); }
+      else if(e.key==='End'){ go(total-1); }
+    });
+
+    // 触摸滑动支持（移动端）
+    var sx=0, sy=0;
+    document.addEventListener('touchstart', function(e){ sx=e.touches[0].clientX; sy=e.touches[0].clientY; }, {passive:true});
+    document.addEventListener('touchend', function(e){
+      var dx=e.changedTouches[0].clientX - sx;
+      var dy=e.changedTouches[0].clientY - sy;
+      if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)){ go(dx<0 ? idx+1 : idx-1); }
+    }, {passive:true});
+
+    render();
+  })();
+</script>
+</body>
+</html>

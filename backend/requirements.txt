@@ -1,0 +1,20 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+sqlalchemy==2.0.36
+asyncpg==0.30.0
+aiosqlite==0.20.0
+pydantic==2.10.4
+pydantic-settings==2.7.1
+PyJWT==2.10.1
+python-multipart==0.0.20
+alembic==1.14.0
+aioboto3==15.5.0
+
+# Excel 导入导出（考勤/报销导出、报销批量导入）：纯 Python，无原生依赖
+openpyxl==3.1.5
+
+# 测试依赖（Phase 5 验证套件）：pytest + pytest-asyncio（asyncio_mode=auto）
+pytest==8.3.4
+pytest-asyncio==0.25.0
+# HTTP 路由层集成测试（tests/test_http_integration.py，starlette TestClient 需要）
+httpx==0.28.1

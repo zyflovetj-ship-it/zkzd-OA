@@ -1,0 +1,71 @@
+# 生产编排：PostgreSQL + FastAPI 后端 + Nginx 前端
+#
+# 首次部署前必须准备根目录 .env（可复制 .env.example），其中三项为必填：
+#   JWT_SECRET     强随机签名密钥
+#   VITE_API_BASE  浏览器可达的后端地址（构建期内联进前端产物）
+#   CORS_ORIGINS   前端访问地址（后端 CORS 白名单）
+# 三者都用 :? 语法强制校验——缺失时 docker compose 直接报错，
+# 而不是产出一个「能启动但浏览器全白/跨域被拒」的坏部署。
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: oa
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-oa_password}
+      POSTGRES_DB: oa
+    # 仅绑定回环地址：数据库不需要对公网暴露，避免口令被外部直连爆破。
+    # 若确需从其他机器直连数据库，改为 "5432:5432"，并同时改成强口令。
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - oa_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oa"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: postgresql+asyncpg://oa:${POSTGRES_PASSWORD:-oa_password}@db:5432/oa
+      JWT_SECRET: ${JWT_SECRET:?请在根目录 .env 中设置强随机 JWT_SECRET}
+      JWT_ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 15
+      REFRESH_TOKEN_EXPIRE_DAYS: 7
+      CORS_ORIGINS: ${CORS_ORIGINS:?请在根目录 .env 中设置前端访问地址，例如 http://192.168.1.10:5173}
+      LOG_LEVEL: INFO
+      # 附件落盘后端。local 时必须配合下面的 oa_uploads 卷，
+      # 否则每次 docker compose up --build 重建容器都会丢掉全部上传附件。
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
+    volumes:
+      # 附件持久化：容器重建不丢文件（也可改 STORAGE_BACKEND=s3 走对象存储）
+      - oa_uploads:/app/uploads
+    ports:
+      - "8000:8000"
+
+  # 生产形态：多阶段构建静态资源 + Nginx 托管（见 frontend/Dockerfile）。
+  # 本地开发要热更新请不要用 compose，直接在 frontend/ 下 npm run dev。
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Vite 在构建期内联该变量，运行期改环境变量无效；换域名必须重建镜像。
+        VITE_API_BASE: ${VITE_API_BASE:?请在根目录 .env 中设置浏览器可达的后端地址，例如 http://192.168.1.10:8000}
+    restart: unless-stopped
+    ports:
+      # 容器内 Nginx 监听 80，宿主仍用 5173，沿用既有访问习惯与 CORS 默认来源
+      - "5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  oa_pgdata:
+  oa_uploads:

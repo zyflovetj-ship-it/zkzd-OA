@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="J3iyb3DuazH8C8i5t6BtAn">
+<head data-page-node-id="zWlkqEJq7ZJFojyBs0ctrV">
+<meta charset="UTF-8" data-page-node-id="xt6aT34vA1AYyFGuV5Z5wb">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="Qk0CyQX1TIVyP6rWucHqL2">
+<title>中科智电 OA 系统 · 架构引擎与全流程汇报</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Rajdhani:wght@500;600;700&display=swap');
+
+/* ============ Tc · dark-luxury 专属模板（能源/AI 适配） ============ */
+:root{
+  --bg:#eef4fb; --card:#ffffff;
+  --p:#0b7bc4; --pm:rgba(11,123,196,0.12); --bd:rgba(11,123,196,0.22);
+  --t:#0b2f5c; --mt:#3f5b78; --dt:#8199b0;
+  --c1:var(--p); --c2:#e08a00; --c3:#0f9d6f;
+  --danger:#ef4444; --warning:#b45309; --success:#0f9d6f; --info:#0b7bc4; --neutral:#64748b;
+  --font-display:'Rajdhani','Noto Sans SC',sans-serif;
+  --font-body:'Noto Sans SC','Rajdhani',sans-serif;
+  --font-mono:'Rajdhani',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;height:100%;overflow:hidden;background:#dce8f5;font-family:var(--font-body);color:var(--t);}
+
+.stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;}
+.deck{position:relative;width:1280px;height:720px;transform-origin:center center;
+  border-radius:10px;overflow:hidden;box-shadow:0 24px 90px rgba(11,47,92,.22),0 0 0 1px rgba(11,123,196,.14);}
+
+.slide{position:absolute;inset:0;width:1280px;height:720px;overflow:hidden;
+  display:flex;flex-direction:column;background:var(--bg);
+  opacity:0;visibility:hidden;transition:opacity .45s ease, transform .45s cubic-bezier(.4,0,.2,1);transform:scale(.985);}
+.slide.active{opacity:1;visibility:visible;transform:scale(1);z-index:2;}
+.slide::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(900px 520px at 12% -8%, rgba(11,123,196,.16), transparent 60%),
+    radial-gradient(820px 480px at 96% 4%, rgba(217,119,6,.12), transparent 60%),
+    radial-gradient(760px 560px at 88% 104%, rgba(5,150,105,.10), transparent 60%),
+    linear-gradient(180deg, rgba(238,244,251,0) 60%, rgba(11,123,196,.05) 100%);}
+.slide::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;opacity:.7;
+  background:
+    linear-gradient(180deg, rgba(11,123,196,.07), transparent 20%),
+    repeating-linear-gradient(0deg, rgba(11,47,92,.042) 0 1px, transparent 1px 46px),
+    repeating-linear-gradient(90deg, rgba(11,47,92,.042) 0 1px, transparent 1px 46px);}
+.slide>*{position:relative;z-index:1;}
+
+.hd{height:72px;padding:0 32px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+  border-bottom:1px solid rgba(11,47,92,.06);
+  background:linear-gradient(90deg, rgba(11,123,196,.06), transparent 55%);}
+.hl{display:flex;flex-direction:column;gap:2px;position:relative;padding-left:11px;}
+.hl::before{content:'';position:absolute;left:0;top:3px;bottom:3px;width:2px;border-radius:2px;
+  background:linear-gradient(180deg,var(--p),transparent);}
+.eyebrow{font-size:9.5px;letter-spacing:2px;color:var(--p);text-transform:uppercase;font-family:var(--font-mono);font-weight:600;}
+.ptitle{font-size:18px;font-weight:900;color:var(--t);letter-spacing:.5px;}
+.hr{display:flex;align-items:center;gap:9px;}
+.tag{background:var(--pm);border:1px solid var(--bd);color:var(--p);font-size:9px;letter-spacing:1px;
+  padding:3px 8px;border-radius:10px;font-family:var(--font-mono);font-weight:600;text-transform:uppercase;}
+.lamp{width:5px;height:5px;border-radius:50%;background:var(--p);box-shadow:0 0 8px var(--p);}
+.pgnum{font-size:16px;font-family:var(--font-mono);color:var(--p);font-weight:700;letter-spacing:1px;}
+
+.ct{height:580px;padding:0 32px;overflow:hidden;flex-shrink:0;}
+.wrap{height:calc(580px - 8px);padding-top:8px;display:flex;flex-direction:column;gap:8px;}
+
+.sm{height:48px;padding:0 32px;display:flex;align-items:center;gap:10px;flex-shrink:0;
+  background:rgba(11,47,92,.05);border-top:1px solid rgba(11,47,92,.05);}
+.smbar{width:3px;height:24px;border-radius:2px;background:var(--p);box-shadow:0 0 10px var(--p);flex-shrink:0;}
+.smtext{font-size:11px;color:var(--mt);line-height:1.3;}
+.smtext b{color:var(--t);font-weight:700;}
+.smspacer{flex:1;}
+.chip{background:var(--pm);border:1px solid var(--bd);color:var(--p);font-size:9px;padding:3px 8px;
+  border-radius:10px;font-family:var(--font-mono);white-space:nowrap;}
+
+.ft{height:20px;padding:0 32px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+  font-size:9px;color:var(--dt);font-family:var(--font-mono);letter-spacing:.5px;}
+.prog{width:110px;height:3px;background:rgba(11,47,92,.08);border-radius:2px;overflow:hidden;}
+.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--p),var(--c3));border-radius:2px;}
+
+.grid{display:grid;gap:8px;}
+.g2{grid-template-columns:repeat(2,1fr);} .g3{grid-template-columns:repeat(3,1fr);}
+.g4{grid-template-columns:repeat(4,1fr);} .g5{grid-template-columns:repeat(5,1fr);}
+.g6{grid-template-columns:repeat(6,1fr);}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:7px;position:relative;overflow:hidden;box-shadow:0 2px 10px rgba(11,47,92,.06);
+  padding:8px 10px;display:flex;flex-direction:column;gap:5px;min-height:0;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--p),transparent);}
+.ch{font-size:12.5px;font-weight:700;color:var(--t);display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.ch .ic{width:22px;height:22px;border-radius:5px;background:var(--pm);border:1px solid var(--bd);
+  display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--p);font-family:var(--font-mono);font-weight:700;flex-shrink:0;}
+.cb{font-size:11px;line-height:1.45;color:var(--mt);flex:1;overflow:hidden;}
+.cb b{color:var(--t);font-weight:700;}
+.cb em{color:var(--p);font-style:normal;font-family:var(--font-mono);}
+.chiprow{display:flex;flex-wrap:wrap;gap:4px;flex-shrink:0;}
+.chiprow span{font-size:9px;color:var(--mt);background:rgba(11,47,92,.05);border:1px solid rgba(11,47,92,.08);
+  padding:2px 6px;border-radius:4px;font-family:var(--font-mono);}
+.num-row{display:grid;gap:5px;flex-shrink:0;margin-top:auto;}
+.numb{background:var(--pm);border:1px solid var(--bd);border-radius:4px;padding:4px 6px;text-align:center;}
+.numb .nv{font-size:16px;font-weight:700;color:var(--p);font-family:var(--font-display);line-height:1.1;}
+.numb .nl{font-size:8.5px;color:var(--dt);margin-top:1px;}
+.accent{background:linear-gradient(120deg,var(--p),#0ea5e9);border-color:transparent;}
+.accent .ch,.accent .cb,.accent .cb b{color:#04121f;}
+.accent .cb em{color:#04121f;}
+.accent::before{background:linear-gradient(90deg,rgba(255,255,255,.62),transparent);}
+.accent .chiprow span{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.45);color:#04263f;}
+
+.arch{display:flex;flex-direction:column;gap:7px;}
+.layer{display:flex;align-items:stretch;gap:9px;border-radius:6px;padding:7px 10px;
+  border:1px solid var(--bd);background:rgba(11,47,92,.02);position:relative;}
+.layer .lab{width:118px;flex-shrink:0;display:flex;flex-direction:column;justify-content:center;}
+.layer .lab .len{font-size:9px;font-family:var(--font-mono);letter-spacing:1px;color:var(--p);font-weight:700;}
+.layer .lab .lcn{font-size:12px;font-weight:700;color:var(--t);}
+.layer .cells{flex:1;display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
+.layer .cells .cell{flex:1;min-width:0;text-align:center;font-size:10px;color:var(--mt);
+  background:rgba(11,47,92,.05);border:1px solid rgba(11,47,92,.09);border-radius:5px;padding:6px 4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;}
+.layer.l1{border-color:rgba(11,123,196,.35);background:rgba(11,123,196,.07);}
+.layer.l2{border-color:rgba(217,119,6,.3);background:rgba(217,119,6,.06);}
+.layer.l3{border-color:rgba(5,150,105,.3);background:rgba(5,150,105,.06);}
+.layer.l4{border-color:rgba(109,40,217,.3);background:rgba(109,40,217,.06);}
+.layer.l5{border-color:rgba(100,116,139,.28);background:rgba(100,116,139,.05);}
+.layer.l2 .lab .len{color:var(--c2);} .layer.l3 .lab .len{color:var(--c3);}
+.layer.l4 .lab .len{color:#6d28d9;} .layer.l5 .lab .len{color:var(--neutral);}
+.arrowdown{text-align:center;color:var(--dt);font-size:10px;height:6px;line-height:0;}
+.arch .layer{flex:1;min-height:0;}
+.ct svg{min-height:0;}
+
+.tbl{width:100%;border-collapse:collapse;font-size:10.5px;}
+.tbl th{background:var(--pm);color:var(--p);font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;
+  padding:6px 8px;text-align:left;border-bottom:1px solid var(--bd);font-family:var(--font-mono);font-weight:700;}
+.tbl td{padding:5.5px 8px;border-bottom:1px solid rgba(11,47,92,.06);color:var(--mt);vertical-align:top;}
+.tbl td b{color:var(--t);}
+.tbl tr:last-child td{border-bottom:none;}
+.st{font-family:var(--font-mono);font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:9px;white-space:nowrap;}
+.st.ok{color:var(--success);background:rgba(5,150,105,.12);border:1px solid rgba(5,150,105,.3);}
+.st.mid{color:var(--warning);background:rgba(180,83,9,.12);border:1px solid rgba(180,83,9,.3);}
+.st.plan{color:var(--neutral);background:rgba(100,116,139,.12);border:1px solid rgba(100,116,139,.3);}
+
+.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;flex-shrink:0;}
+.kpi .k{background:var(--card);border:1px solid var(--bd);border-radius:7px;padding:8px 10px;position:relative;overflow:hidden;}
+.kpi .k::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--p),transparent);}
+.kpi .kv{font-size:26px;font-weight:700;color:var(--p);font-family:var(--font-display);line-height:1;}
+.kpi .kl{font-size:9.5px;color:var(--dt);margin-top:3px;}
+
+.tl{display:flex;gap:8px;align-items:stretch;flex:1;}
+.tlnode{flex:1;background:var(--card);border:1px solid var(--bd);border-radius:7px;padding:9px 10px;
+  display:flex;flex-direction:column;gap:6px;position:relative;}
+.tlnode::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;border-radius:7px 0 0 7px;background:var(--p);}
+.tlnode .tn{font-size:10px;font-family:var(--font-mono);color:var(--p);font-weight:700;letter-spacing:1px;}
+.tlnode .tt{font-size:12px;font-weight:700;color:var(--t);}
+.tlnode .td{font-size:10.5px;color:var(--mt);line-height:1.45;flex:1;}
+
+.cover .hd,.cover .sm{display:none;}
+.cover .ct{height:700px;}
+.covline{height:2px;background:linear-gradient(90deg,transparent,var(--p),transparent);}
+.covwrap{height:700px;display:flex;flex-direction:column;justify-content:center;padding:0 92px;position:relative;}
+.coveyebrow{display:flex;align-items:center;gap:14px;color:var(--p);font-size:10px;letter-spacing:4px;
+  text-transform:uppercase;font-family:var(--font-mono);font-weight:600;}
+.coveyebrow::before,.coveyebrow::after{content:'';height:1px;background:var(--bd);flex:0 0 40px;}
+.covtitle{font-size:52px;font-weight:900;line-height:1.08;margin:20px 0 0;letter-spacing:1px;
+  background:linear-gradient(120deg,#0b2f5c 30%,var(--p));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.covtitle small{display:block;font-size:26px;font-weight:700;color:var(--mt);-webkit-text-fill-color:var(--mt);margin-top:12px;letter-spacing:2px;}
+.covsub{font-size:13px;color:var(--mt);margin-top:20px;max-width:620px;line-height:1.7;}
+.covmeta{font-size:10.5px;color:var(--dt);margin-top:26px;display:flex;gap:14px;font-family:var(--font-mono);letter-spacing:1px;}
+.covmeta span{display:flex;align-items:center;gap:14px;}
+.covmeta span:not(:last-child)::after{content:'';width:4px;height:4px;border-radius:50%;background:var(--dt);}
+.covtag{position:absolute;right:92px;top:50%;transform:translateY(-50%);text-align:right;font-family:var(--font-mono);}
+.covtag .big{font-size:88px;font-weight:700;color:rgba(11,123,196,.16);line-height:1;}
+.covtag .sm2{font-size:11px;color:var(--dt);letter-spacing:2px;}
+
+.divider .hd,.divider .sm{display:none;}
+.divider .ct{height:700px;}
+.divwrap{height:700px;display:flex;flex-direction:column;justify-content:center;padding:0 92px;position:relative;overflow:hidden;}
+.divghost{position:absolute;right:30px;bottom:-40px;font-size:300px;font-weight:900;color:rgba(11,47,92,.055);
+  font-family:var(--font-display);line-height:1;}
+.diveyebrow{display:flex;align-items:center;gap:12px;color:var(--p);font-size:10px;letter-spacing:4px;
+  text-transform:uppercase;font-family:var(--font-mono);font-weight:600;}
+.divnum{font-size:76px;font-weight:700;line-height:1;font-family:var(--font-display);
+  background:linear-gradient(120deg,#0b2f5c,var(--p));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.divname{font-size:34px;font-weight:900;color:var(--t);margin-top:4px;letter-spacing:1px;}
+.divdesc{font-size:12.5px;color:var(--mt);margin-top:16px;max-width:460px;line-height:1.7;}
+
+.toc{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1;align-content:start;}
+.tocitem{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid rgba(11,47,92,.07);
+  border-radius:7px;padding:9px 12px;}
+.tocitem .no{font-size:22px;font-weight:700;font-family:var(--font-display);color:var(--p);opacity:.5;min-width:34px;}
+.tocitem .tt{flex:1;}
+.tocitem .tt .k{font-size:8.5px;letter-spacing:1px;color:var(--dt);text-transform:uppercase;font-family:var(--font-mono);}
+.tocitem .tt .n{font-size:12px;font-weight:600;color:var(--t);}
+.tocitem .pg{font-family:var(--font-mono);font-size:11px;color:var(--dt);}
+
+.nav{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;z-index:50;
+  background:transparent;border:none;box-shadow:none;backdrop-filter:none;padding:2px 6px;
+  pointer-events:none;filter:drop-shadow(0 1px 3px rgba(11,47,92,.5));}
+.nav button,.nav .dots,.nav .dots i,.nav .counter{pointer-events:auto;}
+.nav button{background:none;border:none;color:var(--p);font-size:15px;cursor:pointer;font-family:var(--font-body);
+  padding:2px 6px;border-radius:4px;transition:.2s;}
+.nav button:hover{background:var(--pm);}
+.nav button:disabled{color:var(--dt);cursor:default;background:none;}
+.dots{display:flex;gap:5px;}
+.dots i{width:6px;height:6px;border-radius:50%;background:rgba(11,47,92,.16);cursor:pointer;transition:.25s;}
+.dots i.on{background:var(--p);box-shadow:0 0 7px var(--p);width:16px;border-radius:3px;}
+.counter{font-family:var(--font-mono);font-size:11px;color:var(--mt);min-width:44px;text-align:center;}
+.hint{position:fixed;top:16px;right:20px;font-size:10px;color:var(--dt);z-index:50;font-family:var(--font-mono);letter-spacing:1px;}
+</style>
+</head>
+<body data-page-node-id="KxqLyu6UWWHTteY1bR1CfD">
+<div class="hint" data-page-node-id="Scz18BajHIQ1R1eFaAvwwJ">← → 翻页 · 点击圆点跳转</div>
+<div class="stage" data-page-node-id="IGju1zBclGNHFvemQhxbzq">
+  <div class="deck" id="deck" data-page-node-id="PIXNpAFy7lPJgEvad61wnV">
+
+  <!-- P00 封面 -->
+  <section class="slide cover active" data-page-node-id="kX8sAs2ZtjC8zBgoxyVBzY">
+    <div class="covline" data-page-node-id="ygcGyScc0lCG7eFqxrG2Hw"></div>
+    <div class="ct" data-page-node-id="6OApIEAkGJyOY06GO8vGpX"><div class="covwrap" data-page-node-id="LooFK9Cl7DYpLOvq5qisrN">
+      <div class="coveyebrow" data-page-node-id="urfJ7AdwbdBPTivDUrYHMR">中科智电 · 技术部 · OA 平台</div>
+      <h1 class="covtitle" data-page-node-id="j7pHTGKl8S3LPGc7DklwU7">OA 系统架构与全流程
+        <small data-page-node-id="K3JofFCm7OwhuN8qj4nugn">主流 OA 能力体系 × zk-OA 落地现状</small></h1>
+      <div class="covsub" data-page-node-id="dcgesEmDq4fDGgIMeznnB4">从主流 OA 的<b data-page-node-id="fvJTqxfdCclVn56M45dBXV">引擎·模块·架构·流程</b>四维能力体系出发，对照中科智电自研 <b data-page-node-id="wfhOsIc67EBiJFLQUKARmM">zk-OA</b>（FastAPI + React 19）的功能模块、技术架构与七大引擎落地进度，完整呈现「对齐泛微 e-cology 路线图」的建设成果与下一步规划。</div>
+      <div class="covmeta" data-page-node-id="r2C1cEUkDk62gqvkWOc9qv"><span data-page-node-id="N55QQe2QDdvIoT2VVmSY4T">中科智电（江苏）能源有限公司</span><span data-page-node-id="ui0r1VVDBNfa38kNAD70n4">2026-09-29</span><span data-page-node-id="niEfQ8yq8WtCsaEiiGKNb8">共 15 页</span></div>
+      <div class="covtag" data-page-node-id="xu3Re00CWKK7TMkoQkILMq"><div class="big" data-page-node-id="1L5Zv2DoXstf8Gt0qUW1yO">OA</div><div class="sm2" data-page-node-id="7ITyZ1EulD4JUqUkUw3ImU">ARCHITECTURE · ENGINE · FLOW</div></div>
+    </div></div>
+    <div class="ft" style="z-index:2;" data-page-node-id="cpNvQBoXIRJy8No6BOnQ9S"><span data-page-node-id="HEvkdCQKm2zAvt7RnQuQoe">CONFIDENTIAL · 内部资料</span><span class="prog" data-page-node-id="w12NGKW7PJFMrCG1BBOCm4"><i style="width:7%" data-page-node-id="CPNLrEC1yXsrD0V6ccDbch"></i></span><span data-page-node-id="eDu9Aorp5zALXMAVYH9nbk">COVER · 00/15</span></div>
+  </section>
+
+  <!-- P01 目录 -->
+  <section class="slide" data-page-node-id="t2X4aqhhxZTafXJO1XKd2o">
+    <div class="hd" data-page-node-id="zUxyyPnijqlBX1OKXU4xSD"><div class="hl" data-page-node-id="tvdcBZhwiqCx2k8vzdy195"><div class="eyebrow" data-page-node-id="mX1w1ef2KSsuyDk6vtfxsk">CONTENTS · 汇报大纲</div><h2 class="ptitle" data-page-node-id="tnmYaOGb8c7IwipgdN99q5">全篇导航 · 两大板块 10 个主题</h2></div>
+      <div class="hr" data-page-node-id="Ce6iqtwbNfo65CYc9mEyRn"><span class="tag" data-page-node-id="ZnVIIQXV84pRGtezQFIKHB">目录</span><span class="lamp" data-page-node-id="vCPLP4RxU26pDaVQmwInnB"></span><span class="pgnum" data-page-node-id="d8MSfOyFv13hbAN0VXjFFz">01 / 15</span></div></div>
+    <div class="ct" data-page-node-id="yrXWiCMDh4WwqE88L9C6sq"><div class="wrap" data-page-node-id="P9s4vGTe5nfDviqTJE25BX">
+      <div class="toc" data-page-node-id="US6meiXR0ZngyUXy3Lm46F">
+        <div class="tocitem" data-page-node-id="QCv8ykHqRH78sNwUxzJB1U"><div class="no" data-page-node-id="ATscsAD28Zk59DEfUkt8vI">01</div><div class="tt" data-page-node-id="ODqFMz1tSEyqcQk64SMZqs"><div class="k" data-page-node-id="PWM8z2igDN4Hl9TeIMiDVp">PART 01 · 主流 OA</div><div class="n" data-page-node-id="0iSOEqFuMCAOD1rcBdY7tc">六大能力域模块地图</div></div><div class="pg" data-page-node-id="h2CXz8eejb559uKz2f0iuN">P03</div></div>
+        <div class="tocitem" data-page-node-id="1aNXDzgOnFeKwbsu6bElTr"><div class="no" data-page-node-id="7S2fsHoZh0ODgKqZqVthAf">02</div><div class="tt" data-page-node-id="DcC3k4U5DtgZ02k048eirm"><div class="k" data-page-node-id="0onqLDy4EZpDjIg6vqnX3z">PART 01 · 主流 OA</div><div class="n" data-page-node-id="fNVSDGxGoFQBnAL1A8E4FV">五层总体架构图</div></div><div class="pg" data-page-node-id="kQQBBjFBv864WBPBTzmM0x">P04</div></div>
+        <div class="tocitem" data-page-node-id="CgCBJHWvuQUB3rhcnpChZl"><div class="no" data-page-node-id="FB51JNreGCEiR37YHZWC9U">03</div><div class="tt" data-page-node-id="VCXcKtaHu81qDmWk8zsbd4"><div class="k" data-page-node-id="PTRbCo42R44BqwNeezHOG5">PART 01 · 主流 OA</div><div class="n" data-page-node-id="jd9dgytbLlbDp4Hrb0Y3O3">七大引擎能力矩阵</div></div><div class="pg" data-page-node-id="K0VhlzQsmCP9cLgrNgB6Uk">P05</div></div>
+        <div class="tocitem" data-page-node-id="n3qc4dCwF077tB1K4qeWnz"><div class="no" data-page-node-id="7yz84Rtm8tdUg3QK47HNOG">04</div><div class="tt" data-page-node-id="QO12LAtYJEPGxwgY8JUNgw"><div class="k" data-page-node-id="9lUkBDsB8ADKda0246cfaC">PART 01 · 主流 OA</div><div class="n" data-page-node-id="naeo6B9U4HoHJk7iolyH0j">端到端全流程泳道</div></div><div class="pg" data-page-node-id="GPiO1RgXcsSrk2lVxC5ot3">P06</div></div>
+        <div class="tocitem" data-page-node-id="h0S0SiIOvtq9Cj4wGjFkBS"><div class="no" data-page-node-id="7nrcdT7UDQEG5jlA4D8SsL">05</div><div class="tt" data-page-node-id="5Z8WW2Xm8YIEE5F2u7rEDH"><div class="k" data-page-node-id="TjnEFe62MR7CewmQL54No0">PART 02 · zk-OA</div><div class="n" data-page-node-id="AptKeYGlGgxalpcK5Es8Le">功能模块地图</div></div><div class="pg" data-page-node-id="7agmXLYqjsbXv2cCR4eIoi">P08</div></div>
+        <div class="tocitem" data-page-node-id="fCnBC5ucHrCZjDxaSVuAx5"><div class="no" data-page-node-id="2nbf419ux25r8qcUXhFcsk">06</div><div class="tt" data-page-node-id="kw5PRMDkYC7cyEX98lQRvG"><div class="k" data-page-node-id="zTbSnZY1XjFpUw0IQgugJM">PART 02 · zk-OA</div><div class="n" data-page-node-id="kE32ZDPEc9cEx2aqlLPTzF">技术架构分层图</div></div><div class="pg" data-page-node-id="sbaJOz2yaAvAONY12ZTRI3">P09</div></div>
+        <div class="tocitem" data-page-node-id="mXPy1ekI2IYHp2DLc8J5SH"><div class="no" data-page-node-id="f9lXwz4a4SHEedGgT2OkSt">07</div><div class="tt" data-page-node-id="LrGZvtbGWpwJ3ScBfqGzBw"><div class="k" data-page-node-id="drhNppgbXeWHR1yDEk8XI2">PART 02 · zk-OA</div><div class="n" data-page-node-id="KRQLGwP8pjo4yaGJJhfoFO">技术栈结构全景</div></div><div class="pg" data-page-node-id="nDydEGFMC0vjy8mXB9pyuj">P10</div></div>
+        <div class="tocitem" data-page-node-id="QclbjA9s8NVpeDi15bS0CC"><div class="no" data-page-node-id="glkqTfMA6TTNuLCCia5vT1">08</div><div class="tt" data-page-node-id="iHLdhuBx6o6EgMHEX2VXpB"><div class="k" data-page-node-id="y6tWFoC3jyzDUa3TodlSaC">PART 02 · zk-OA</div><div class="n" data-page-node-id="EI9O6K1MtIfFya2Ngj9J8I">引擎能力对标表</div></div><div class="pg" data-page-node-id="1JYfLj2J7gex9dASxwNGCy">P11</div></div>
+        <div class="tocitem" data-page-node-id="iO78UGKHbUfIf9PRxd3PLP"><div class="no" data-page-node-id="VO1ckCZ62Yyx511wDzZ9dV">09</div><div class="tt" data-page-node-id="TsQhJ5B9DKXCFJKgSvhfIE"><div class="k" data-page-node-id="9J0Qeo2zEXl3tsiMtVt6jG">PART 02 · zk-OA</div><div class="n" data-page-node-id="PwxuWCwTNHp9BNLwjDy6VO">核心业务流程图</div></div><div class="pg" data-page-node-id="VXaBYJZR7qQ0dqAI9L2ofh">P12</div></div>
+        <div class="tocitem" data-page-node-id="5Jiv29U9f7O0bhYmTuFlFY"><div class="no" data-page-node-id="LV1lExZD35oz8dNYprW3hW">10</div><div class="tt" data-page-node-id="agSq8MgZFc5u2X8k7jfSTo"><div class="k" data-page-node-id="0CssFynYyu7tdKMsMAPMvH">PART 02 · zk-OA</div><div class="n" data-page-node-id="2tAXVNLnARdnWr7l88Npwi">质量门禁与建设规划</div></div><div class="pg" data-page-node-id="mjq3cfeU9zE2wvSHOcCTGc">P13</div></div>
+      </div>
+    </div></div>
+    <div class="sm" data-page-node-id="cD56hOf0loQC10Lsy5ZaBt"><span class="smbar" data-page-node-id="NlmUgVVdmoG2WqAYutMNeT"></span><span class="smtext" data-page-node-id="CLobTTTaneO337MR38dYsH">全篇 <b data-page-node-id="DrYn2JFEdjn8HeVULgnmhi">15 页</b>：Part 1 梳理主流 OA 的<b data-page-node-id="BBnmrtUk8khQ9TrVazbgQI">能力体系</b>，Part 2 对照 zk-OA 的<b data-page-node-id="nVkOqa2YlojoOB0Jc2DLOq">落地现状</b>，含 4 类工程图。</span>
+      <span class="smspacer" data-page-node-id="mtzKPlXO1wwmYMQYBBAjQQ"></span><span class="chip" data-page-node-id="MEKUC2ZTeCGeFuBHJrCl9E">模块图</span><span class="chip" data-page-node-id="1FgiPqYSrvXF1rrlBqQyhY">架构图</span><span class="chip" data-page-node-id="97E1Htg2aIQfOJCojDgvfC">流程图</span><span class="chip" data-page-node-id="75ajXpd2huNu9V7huBtqFI">技术栈</span></div>
+    <div class="ft" data-page-node-id="ji7itQlKAYUF10uRkiuwSX"><span data-page-node-id="5HOsqQIRC8p5hIHZkKSkWO">中科智电 · OA 系统架构与全流程</span><span class="prog" data-page-node-id="TQID76VY4mA18NytykAqeK"><i style="width:13%" data-page-node-id="1Ex5rDBylR1YrrCV8Tvi2x"></i></span><span data-page-node-id="QOtlRF21CTCXuN5WE7Fb0C">01/15</span></div>
+  </section>
+
+  <!-- P02 分隔 Part1 -->
+  <section class="slide divider" data-page-node-id="dzO0QPT9WfEHemV8owsYBn">
+    <div class="ct" data-page-node-id="krZS3VxaUQqodCwinSlwnk"><div class="divwrap" data-page-node-id="CU3OzFyYRFnYIi7guZTd0K">
+      <div class="divghost" data-page-node-id="Z52L9rM8bcNu6z86lxYk7R">01</div>
+      <div class="diveyebrow" data-page-node-id="HwO9G1ehrpqpgtCoPNJcsr">PART 01</div>
+      <div class="divnum" data-page-node-id="lVVpdK0FkOMHtHZ3WfjKZs">01</div>
+      <div class="divname" data-page-node-id="wLUK8DoDmwr9AAGrmIrAcP">主流 OA 系统全景</div>
+      <div class="divdesc" data-page-node-id="yIzWgEgRZhHKq4DYJya1vN">解构成熟 OA 产品的能力骨架：<b data-page-node-id="uy1sXJuNcA0K45setlx3BD">六大能力域</b>构成的模块地图、<b data-page-node-id="vopHpSpdJJGhVoFddzG1tb">五层</b>总体架构、<b data-page-node-id="1vF75ticrf9eSbpkDHtWQ9">七大引擎</b>作为技术底座，以及贯穿「发起—审批—归档—回写」的<b data-page-node-id="v1tz7CFMrchxWx3HF8Vahb">端到端全流程</b>。这是 zk-OA 对标的坐标系。</div>
+    </div></div>
+    <div class="ft" style="z-index:2;" data-page-node-id="BBfBgms8HDx3bBLtGNUE7i"><span data-page-node-id="vGgQnpIIME2kEWLrfaiWpA">PART 01 · 主流 OA 系统全景</span><span class="prog" data-page-node-id="27XAnKoNDgoBqjhE8fnmFn"><i style="width:20%" data-page-node-id="SjEl1WhBJU15dQTQwv0zMO"></i></span><span data-page-node-id="mpzPyGIu7zBZWBAGCRIPOp">02/15</span></div>
+  </section>
+
+  <!-- P03 主流 OA 模块图 -->
+  <section class="slide" data-page-node-id="ZqXps8aAtX4XPXCbLjJN9N">
+    <div class="hd" data-page-node-id="Bkna6Oe8O3DBADex8sElv4"><div class="hl" data-page-node-id="lzrmQLuwFP7u8ba2FIgMsE"><div class="eyebrow" data-page-node-id="CFlvnFg9TQ3WurBSSRAph2">PART 01 · 模块地图</div><h2 class="ptitle" data-page-node-id="pEFXHMgo8UUhjGx4uwYDRt">主流 OA · 六大能力域模块图</h2></div>
+      <div class="hr" data-page-node-id="2NOFieOYs17gkTXWVqphe8"><span class="tag" data-page-node-id="VKbYPdOxTfkUkSXgsjdYEH">模块图</span><span class="lamp" data-page-node-id="Z90UuGMY1pRCBcHxMkaplv"></span><span class="pgnum" data-page-node-id="sclDoiCiY8zRqisdaSKhgu">03 / 15</span></div></div>
+    <div class="ct" data-page-node-id="X1oS2z77IgoihUHhTcTs9H"><div class="wrap" data-page-node-id="wWpdVWO2aQrv7cEoE7nIFW">
+      <svg viewBox="0 0 960 372" style="width:100%;flex:1;min-height:340px;" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans SC, sans-serif" data-page-node-id="EGekcGmoltK83azOpSwFIm">
+        <defs data-page-node-id="dYL4QEWMHnfQ4vb3lIqyWz"><marker id="m-ar" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto" data-page-node-id="ASizMCIkfOr6UUljCRN6cz"><path d="M0,0 L0,6 L6,3 z" fill="#0b7bc4" data-page-node-id="1OptNK7eujw99bduwwc65B"/></marker></defs>
+        <rect x="0" y="0" width="960" height="44" rx="6" fill="rgba(11,123,196,.12)" stroke="rgba(11,123,196,.35)" data-page-node-id="CKYm69gSIkiEETapISlisP"/>
+        <text x="16" y="27" font-size="12" font-weight="700" fill="#0b7bc4" data-page-node-id="fYKslc0hUR0X0WfP6xc76k">统一门户 · 个人工作台</text>
+        <text x="300" y="27" font-size="10.5" fill="#3f5b78" data-page-node-id="9zN0tLYO5rspQSFs46Grj6">统一待办 · 待阅公告 · 快捷入口 · 移动端 · 第三方集成</text>
+        <text x="944" y="27" text-anchor="end" font-size="9" font-family="Rajdhani" fill="#8199b0" data-page-node-id="gsFg7s9bE6r9wO6q3xZzPo">PORTAL</text>
+        <g font-size="10.5" data-page-node-id="L2a9rD7FEeG1LlSkw3xBjP">
+          <rect x="0" y="56" width="150" height="238" rx="6" fill="rgba(11,47,92,.045)" stroke="rgba(11,123,196,.25)" data-page-node-id="RzhGZjQMaGEred5iqDo8xm"/>
+          <rect x="0" y="56" width="150" height="30" rx="6" fill="rgba(11,123,196,.18)" data-page-node-id="69bYWvLGZrVB7dHTnvkJ9X"/><text x="75" y="76" text-anchor="middle" font-size="11.5" font-weight="700" fill="#0b2f5c" data-page-node-id="VJlPfH1wrhQB1Jd2agnPei">流程审批</text>
+          <text x="75" y="106" text-anchor="middle" fill="#3f5b78" data-page-node-id="I03PSwLL5F6tR4Z1A4zc7Y">流程设计器</text><text x="75" y="130" text-anchor="middle" fill="#3f5b78" data-page-node-id="OI1hPiYZC7ShoWkrTfRKQW">待办中心</text><text x="75" y="154" text-anchor="middle" fill="#3f5b78" data-page-node-id="dOXticOW3VIGagB91X1bOi">会签 / 加签</text><text x="75" y="178" text-anchor="middle" fill="#3f5b78" data-page-node-id="WjhImxzkfMxKnnj9KqH5mG">转办 / 撤回</text><text x="75" y="202" text-anchor="middle" fill="#3f5b78" data-page-node-id="TVWAi2WZ7L26IsTQp0Kx13">流程监控</text><text x="75" y="226" text-anchor="middle" fill="#3f5b78" data-page-node-id="1FY9HLjpu3RzrI55JRwUV1">条件分支</text><text x="75" y="256" text-anchor="middle" font-size="9" font-family="Rajdhani" fill="#0b7bc4" data-page-node-id="LH8XtUGYXiRZtB8mlAYtRc">BPM</text>
+          <rect x="162" y="56" width="150" height="238" rx="6" fill="rgba(11,47,92,.045)" stroke="rgba(11,123,196,.25)" data-page-node-id="l4XqAxpc1v7GD9bjNKBvIF"/>
+          <rect x="162" y="56" width="150" height="30" rx="6" fill="rgba(11,123,196,.18)" data-page-node-id="tg9wqxXdDNvsZskNDsDctA"/><text x="237" y="76" text-anchor="middle" font-size="11.5" font-weight="700" fill="#0b2f5c" data-page-node-id="ksS9XwciuKbAIzzuDwlk1W">协同办公</text>
+          <text x="237" y="106" text-anchor="middle" fill="#3f5b78" data-page-node-id="zfFvJ2v34z9H3ubOrsVtap">公告通知</text><text x="237" y="130" text-anchor="middle" fill="#3f5b78" data-page-node-id="GEuePm4RBeQNEYBQ3nN2Y1">公文流转</text><text x="237" y="154" text-anchor="middle" fill="#3f5b78" data-page-node-id="kVIkq3SGDeNE1KR9M185PC">会议管理</text><text x="237" y="178" text-anchor="middle" fill="#3f5b78" data-page-node-id="HeC9Rg4jhfSy5OgFIzRaxh">日程协作</text><text x="237" y="202" text-anchor="middle" fill="#3f5b78" data-page-node-id="eB0La29PYBIiE2b44KJmge">任务分派</text><text x="237" y="226" text-anchor="middle" fill="#3f5b78" data-page-node-id="QDRbIdG18cudXTWWPcyqfG">即时消息</text><text x="237" y="256" text-anchor="middle" font-size="9" font-family="Rajdhani" fill="#0b7bc4" data-page-node-id="3hPCSw2Zqlq3HcZdDlaztS">COLLAB</text>
+          <rect x="324" y="56" width="150" height="238" rx="6" fill="rgba(11,47,92,.045)" stroke="rgba(11,123,196,.25)" data-page-node-id="stP3hbcx7YmOlDODOCWVCv"/>
+          <rect x="324" y="56" width="150" height="30" rx="6" fill="rgba(11,123,196,.18)" data-page-node-id="96C1Jve9HXZZKlka0WImCf"/><text x="399" y="76" text-anchor="middle" font-size="11.5" font-weight="700" fill="#0b2f5c" data-page-node-id="vyMyAAmKJIejVQVklplJaC">人力资源</text>
+          <text x="399" y="106" text-anchor="middle" fill="#3f5b78" data-page-node-id="xfloGhX1mP3HUq4lXQ4mzZ">组织架构</text><text x="399" y="130" text-anchor="middle" fill="#3f5b78" data-page-node-id="Q5oMS8wDDDT6PPxXdAMBdC">员工档案</text><text x="399" y="154" text-anchor="middle" fill="#3f5b78" data-page-node-id="WktWfR5e2DV3jyDgaOeoDB">考勤排班</text><text x="399" y="178" text-anchor="middle" fill="#3f5b78" data-page-node-id="O64aBmqdzbB3c4JaTz1Gqi">请假出差</text><text x="399" y="202" text-anchor="middle" fill="#3f5b78" data-page-node-id="8KoGeaRNoI1BLBbiosDURC">加班调休</text><text x="399" y="226" text-anchor="middle" fill="#3f5b78" data-page-node-id="tkDGTrfqPQN7Bk7UMBuy0r">薪酬绩效</text><text x="399" y="256" text-anchor="middle" font-size="9" font-family="Rajdhani" fill="#0b7bc4" data-page-node-id="MEgJBauCyTglFyvTvOz8zL">HR</text>
+          <rect x="486" y="56" width="150" height="238" rx="6" fill="rgba(11,47,92,.045)" stroke="rgba(11,123,196,.25)" data-page-node-id="OX5AHZNO9EtMj9xKWbFMQs"/>
+          <rect x="486" y="56" width="150" height="30" rx="6" fill="rgba(11,123,196,.18)" data-page-node-id="aHeFHBHsERR7PzApknF30P"/><text x="561" y="76" text-anchor="middle" font-size="11.5" font-weight="700" fill="#0b2f5c" data-page-node-id="wsaXk9prsu5wlPoI7IeNIA">财务费控</text>
+          <text x="561" y="106" text-anchor="middle" fill="#3f5b78" data-page-node-id="cPyOEcjflzhsymIfBKR09x">费用报销</text><text x="561" y="130" text-anchor="middle" fill="#3f5b78" data-page-node-id="LITXFQrb1nMg0fvLIFGrrS">预算控制</text><text x="561" y="154" text-anchor="middle" fill="#3f5b78" data-page-node-id="z2RjO2QpYFKdpQAZtfGTix">发票管理</text><text x="561" y="178" text-anchor="middle" fill="#3f5b78" data-page-node-id="bX4P6Ee4iUhGe9rVi0cEbN">借还款</text><text x="561" y="202" text-anchor="middle" fill="#3f5b78" data-page-node-id="K8uVsJSsKKDiqTtJLaM5S3">付款审批</text><text x="561" y="226" text-anchor="middle" fill="#3f5b78" data-page-node-id="u6wiQNfXzS59ZanurbAy7X">费控报表</text><text x="561" y="256" text-anchor="middle" font-size="9" font-family="Rajdhani" fill="#0b7bc4" data-page-node-id="MJRP5tlw2bhESOeIuNtI9M">FIN</text>
+          <rect x="648" y="56" width="150" height="238" rx="6" fill="rgba(11,47,92,.045)" stroke="rgba(11,123,196,.25)" data-page-node-id="QKXIHyPmvz6zIDFK6oNtTz"/>
+          <rect x="648" y="56" width="150" height="30" rx="6" fill="rgba(11,123,196,.18)" data-page-node-id="dUHsRXn06kC7e70CBx5KB4"/><text x="723" y="76" text-anchor="middle" font-size="11.5" font-weight="700" fill="#0b2f5c" data-page-node-id="Q8Gc6kiaksJs5utUJFYQCc">知识文档</text>
+          <text x="723" y="106" text-anchor="middle" fill="#3f5b78" data-page-node-id="fY7DAPL3SqmaIbzZQwdGnB">文档中心</text><text x="723" y="130" text-anchor="middle" fill="#3f5b78" data-page-node-id="RdyZAhJW42hbj4aUkareEB">知识库</text><text x="723" y="154" text-anchor="middle" fill="#3f5b78" data-page-node-id="cjhhDQI0kdyC5YA66Eg6OE">版本管理</text><text x="723" y="178" text-anchor="middle" fill="#3f5b78" data-page-node-id="IiBKMiVpNEFDYel191PIEh">全文检索</text><text x="723" y="202" text-anchor="middle" fill="#3f5b78" data-page-node-id="2GyvFcpKsvPARUy0AGO2Nn">权限下载</text><text x="723" y="226" text-anchor="middle" fill="#3f5b78" data-page-node-id="AkBKm8i6X6vnmbrBHJYpHT">分类归档</text><text x="723" y="256" text-anchor="middle" font-size="9" font-family="Rajdhani" fill="#0b7bc4" data-page-node-id="VSSLnnsAIzCyQkAZ3M0YFn">DOCS</text>
+          <rect x="810" y="56" width="150" height="238" rx="6" fill="rgba(11,47,92,.045)" stroke="rgba(11,123,196,.25)" data-page-node-id="QTNhq6UWlaDjWbF2arHaSu"/>
+          <rect x="810" y="56" width="150" height="30" rx="6" fill="rgba(11,123,196,.18)" data-page-node-id="XG8UfYDSx1HY97PjbF7Z1q"/><text x="885" y="76" text-anchor="middle" font-size="11.5" font-weight="700" fill="#0b2f5c" data-page-node-id="0LmcGlwf4SaEAtWydFN981">系统管理</text>
+          <text x="885" y="106" text-anchor="middle" fill="#3f5b78" data-page-node-id="ooTohs8yOdwqmlLNxYel2C">组织权限</text><text x="885" y="130" text-anchor="middle" fill="#3f5b78" data-page-node-id="GYsJsPSNjBa06XVIIbO3lY">角色授权</text><text x="885" y="154" text-anchor="middle" fill="#3f5b78" data-page-node-id="mNSJmHaWeoYsrWFp8sHwtt">系统日志</text><text x="885" y="178" text-anchor="middle" fill="#3f5b78" data-page-node-id="JjrrvOBZbZJuNcuI9MyolI">数据字典</text><text x="885" y="202" text-anchor="middle" fill="#3f5b78" data-page-node-id="NKhm9uHd9fW9qKqCG5ttHN">集成接口</text><text x="885" y="226" text-anchor="middle" fill="#3f5b78" data-page-node-id="Y6epgaM0KLEmF7M2nhcIB1">运维监控</text><text x="885" y="256" text-anchor="middle" font-size="9" font-family="Rajdhani" fill="#0b7bc4" data-page-node-id="9fkQWS4NC9AMP6Bl7oBzuC">SYS</text>
+        </g>
+        <rect x="0" y="304" width="960" height="44" rx="6" fill="rgba(5,150,105,.10)" stroke="rgba(5,150,105,.3)" data-page-node-id="3CBFtMUZdhClz4j5gFe9bR"/>
+        <text x="16" y="331" font-size="12" font-weight="700" fill="#0f9d6f" data-page-node-id="JsuewPCK4Gx5rs77EAAtNA">公共支撑层</text>
+        <text x="140" y="331" font-size="10.5" fill="#3f5b78" data-page-node-id="3kbutz70aHOwlCpmJqCUsG">组织架构 · 角色权限 · 消息通知 · 流程引擎 · 表单 / 建模 · 审计日志 · 集成接口 · 统一认证</text>
+        <text x="944" y="331" text-anchor="end" font-size="9" font-family="Rajdhani" fill="#8199b0" data-page-node-id="zX3jJac2FE8bJvHjm7RjiB">PLATFORM</text>
+        <line x1="480" y1="44" x2="480" y2="56" stroke="#0b7bc4" stroke-width="1.5" marker-end="url(#m-ar)" data-page-node-id="74B3yI21GCP5abkWluzdG9"/>
+        <line x1="480" y1="294" x2="480" y2="304" stroke="#0b7bc4" stroke-width="1.5" marker-end="url(#m-ar)" data-page-node-id="k3vxNVCi2KviOn1h8Mlf43"/>
+      </svg>
+      <div class="grid g3" style="flex-shrink:0;" data-page-node-id="48MC4ZsKOBGZm4e99XtCer">
+        <div class="card" style="padding:6px 10px;" data-page-node-id="17a7YXrNMi3Du3EItgRPDj"><div class="cb" data-page-node-id="QgGYhU53UyZ5HrMlnVZVQM"><b data-page-node-id="QIOaTEZ9AsCAZZ9qVT7fcB">6 大能力域</b> · 覆盖审批、协同、人力、财务、文档、系统治理，构成 OA 的功能全集，产品差异主要体现在域内深度与横切引擎。</div></div>
+        <div class="card" style="padding:6px 10px;" data-page-node-id="SKSROaNpVWdJW3VSYsArDX"><div class="cb" data-page-node-id="b9u1K30tEUbpeTRvAx14aX"><b data-page-node-id="2C02Lo1bSEUGTmo4AN7goy">门户 + 支撑双带</b> · 上层统一门户收敛入口，下层公共支撑层沉淀组织权限 / 消息 / 日志等被复用能力。</div></div>
+        <div class="card" style="padding:6px 10px;" data-page-node-id="kt2912xHBZDy7sbNvXTSu3"><div class="cb" data-page-node-id="UbPfUcGLHDQHJmEBN2uoPn"><b data-page-node-id="aEej4azLuGiNYEX4GrCaWF">模块可插拔</b> · 各域通过统一权限码与菜单注册接入，新增域不改动核心，是平台化的关键设计。</div></div>
+      </div>
+    </div></div>
+    <div class="sm" data-page-node-id="Lb4WKJbTf3FIVj5BDK844S"><span class="smbar" data-page-node-id="wyUZbvru4ABod3uiCjyigS"></span><span class="smtext" data-page-node-id="B3J2uCq4RpzUMBMJ47FJx1">主流 OA 的功能骨架 = <b data-page-node-id="GAVXNj5MFhb6PBntvvAhaS">1 门户 + 6 能力域 + 1 公共支撑层</b>，共沉淀 <b data-page-node-id="2SgGyyvYWqT20Fa9gwMk0x">40+ 子能力</b>，是 zk-OA 的模块对标基线。</span>
+      <span class="smspacer" data-page-node-id="FFMdnEVpEVj8Y2J7Ntpbks"></span><span class="chip" data-page-node-id="2QjG5gphHPFfiG6FWK3S9d">1 Portal</span><span class="chip" data-page-node-id="W5FCpz1zyHpz0flHDD6dUI">6 Domains</span><span class="chip" data-page-node-id="HXrGCaIZEAspo6wiwvWgHx">40+ Cap</span></div>
+    <div class="ft" data-page-node-id="NhINEYQjZF064H2PRL5mDj"><span data-page-node-id="8ueusHzHzTBc4pgspNjUSw">中科智电 · OA 系统架构与全流程</span><span class="prog" data-page-node-id="QgjroPorbEcDbworBxsiP3"><i style="width:27%" data-page-node-id="McQuOiK1pMlb6KklCkSVFz"></i></span><span data-page-node-id="9hAeYqi33FZCxfqAP1NACb">03/15</span></div>
+  </section>
+
+  <!-- P04 主流 OA 分层架构 -->
+  <section class="slide" data-page-node-id="4gNS4LQaoWvIUnBvp2kF9d">
+    <div class="hd" data-page-node-id="sxtIj1Nz3bIBCq2PpcBAKp"><div class="hl" data-page-node-id="DrthwdkuAjh5BsgieZMJnH"><div class="eyebrow" data-page-node-id="tPNGxpTvb7wllzEycWqTIH">PART 01 · 总体架构</div><h2 class="ptitle" data-page-node-id="edpEQeTN2Rt9DliOy9XzGH">主流 OA · 五层总体架构图</h2></div>
+      <div class="hr" data-page-node-id="UY4iStYJWQVyEgmKIYJAC4"><span class="tag" data-page-node-id="92vXRp9l3VkQMun4FhAzfs">架构图</span><span class="lamp" data-page-node-id="RUcgTAJMA3bczeF3wOEEZE"></span><span class="pgnum" data-page-node-id="nrEknuQgA5jQC90YstyC5x">04 / 15</span></div></div>
+    <div class="ct" data-page-node-id="BwNyC9inUeMGQIAGcfCvJb"><div class="wrap" data-page-node-id="Ky6aGPjI9crgQq6A0BAP5R">
+      <div class="arch" style="flex:1;" data-page-node-id="I9IAUAY6Vw7TwvLOHOrJfy">
+        <div class="layer l1" data-page-node-id="Aaf5HA3vBfTv792aCsv3zC"><div class="lab" data-page-node-id="vS8pIp6VHFjknxc1dL2ACU"><div class="len" data-page-node-id="wYmbb2JFoqrobK6jYKUQoX">PRESENTATION</div><div class="lcn" data-page-node-id="VNJJdyseY65EQshDQAKbTO">展现层</div></div>
+          <div class="cells" data-page-node-id="0gB89CJ1msaHdLquo3mvyC"><div class="cell" data-page-node-id="6kknTyjwqYD9UHnHeXAS4u">PC 端门户</div><div class="cell" data-page-node-id="lODIu5XvzSCDgwH6LAlckr">移动端 App</div><div class="cell" data-page-node-id="TlADTniuwFOTwCnfD2Hh0G">统一工作台</div><div class="cell" data-page-node-id="nfMYN2s8RfjhVtM28puBLe">第三方系统嵌入</div></div></div>
+        <div class="arrowdown" data-page-node-id="A6xAkdXE7WWbFKvIt6LQAK">▼</div>
+        <div class="layer l2" data-page-node-id="DwW75qmhp7xvZ202CUMdfJ"><div class="lab" data-page-node-id="HO0kG3xAYc7o3e1rAoN0T1"><div class="len" data-page-node-id="a7Qmtq9PGYqWChHNGGPazG">APPLICATION</div><div class="lcn" data-page-node-id="hhxS78HJKoO6ZX8Z7nqQjC">应用层</div></div>
+          <div class="cells" data-page-node-id="cwgXkeeQurwCprfWZR3PV2"><div class="cell" data-page-node-id="xS3dzcXxFYolDRDBKFLNVd">流程审批</div><div class="cell" data-page-node-id="FSxuB3tMWAd5kKPVwvor9h">协同办公</div><div class="cell" data-page-node-id="EwghfYS2zJzcOqGwu3CBUO">人力资源</div><div class="cell" data-page-node-id="ZaGxGHSqcab519xuklyUPU">财务费控</div><div class="cell" data-page-node-id="r6Dszuze2WyD7kzFJo7FCV">知识文档</div><div class="cell" data-page-node-id="7AwyccjWNqP3ukvHDfbQn8">系统管理</div></div></div>
+        <div class="arrowdown" data-page-node-id="uA0zsd5oeCJGB1K3MKTDDp">▼</div>
+        <div class="layer l3" data-page-node-id="2TEcxtjQafAUc7GwENctsF"><div class="lab" data-page-node-id="6B7KUn5XYAy1Ky08zdHVGG"><div class="len" data-page-node-id="a1HHLnbzkWVksAPk0WWvUs">ENGINE</div><div class="lcn" data-page-node-id="1zks05IS89FSSixWAn6b6q">引擎层</div></div>
+          <div class="cells" data-page-node-id="1cmBDhUfMSSPq7LxaZQJ6s"><div class="cell" data-page-node-id="foNIyqreDFQNpFwJMcua0G">流程引擎</div><div class="cell" data-page-node-id="2AhksookkAnu5L9ryENcSi">表单引擎</div><div class="cell" data-page-node-id="rIMoBS9UO9N1KCgUPiD4Hd">建模引擎</div><div class="cell" data-page-node-id="DCepz0K5CZQRP3Sz2SyBYU">内容引擎</div><div class="cell" data-page-node-id="65ZtG6Jok768Ndbd2X8BtX">消息引擎</div><div class="cell" data-page-node-id="0YAPrYSc1OHGr7iz34hPeN">权限引擎</div><div class="cell" data-page-node-id="W9aBQrxgHgYHkWGZi33Yi9">报表引擎</div></div></div>
+        <div class="arrowdown" data-page-node-id="2EBRAVktriamJx6OiUmHju">▼</div>
+        <div class="layer l4" data-page-node-id="ieUXbdHZEfvi6SU7Vs4LTV"><div class="lab" data-page-node-id="VZl82oQ7JR8yoLaOcpG6Sb"><div class="len" data-page-node-id="WgDLiRDAY6D0sW2ymg8bXy">DATA</div><div class="lcn" data-page-node-id="Kb9TyXvQW4nLXb9A2iHb0G">数据层</div></div>
+          <div class="cells" data-page-node-id="CZV7VcO2FArf4sFBo3bPj1"><div class="cell" data-page-node-id="qx3EbGpBPFo6wtwtcqLUWR">关系数据库</div><div class="cell" data-page-node-id="mZzXNXf3KOuyodgjBp459K">文档库</div><div class="cell" data-page-node-id="rALIkhAXO3LMztbmFaWzHh">缓存</div><div class="cell" data-page-node-id="iGsTZErkQHe65C5v3VMPNd">对象存储</div><div class="cell" data-page-node-id="82z8KWuWCJ9jyV95oUgCsL">全文检索</div></div></div>
+        <div class="arrowdown" data-page-node-id="EPDcpr0v9yZaBouYuW966i">▼</div>
+        <div class="layer l5" data-page-node-id="Vz3GURriVR4Bg7PD8pzXWL"><div class="lab" data-page-node-id="D2fM93SdgNLRN98eKIUTMJ"><div class="len" data-page-node-id="zYQAMYx3jrz2qRNXrRL3LO">INFRA</div><div class="lcn" data-page-node-id="vquqLNASdNsVvmh1pXVgDr">基础设施</div></div>
+          <div class="cells" data-page-node-id="ldXFYzpsbGXcF8yDsoq2yA"><div class="cell" data-page-node-id="zCinEOqJLAiJdxFOe618yg">容器编排</div><div class="cell" data-page-node-id="0uxOxm8ALWChOvA1niu5Ez">API 网关</div><div class="cell" data-page-node-id="7eWdLoLDS0GmdSZAW65NMe">监控告警</div><div class="cell" data-page-node-id="GLOgebPff9dEknNCz6ZJ1N">安全审计</div><div class="cell" data-page-node-id="RUIrux9ZZ6XwKBpvjgbYYj">备份容灾</div></div></div>
+      </div>
+      <div class="grid g3" style="flex-shrink:0;" data-page-node-id="Iw6oAtBcuYqZ7rVssrc8Bf">
+        <div class="card" style="padding:6px 10px;" data-page-node-id="sXUGSWFJTcDYruXdc1zXYR"><div class="ch" style="font-size:11px;" data-page-node-id="KiIdZ6N7qIXULq7GIeCEni">请求流向</div><div class="cb" data-page-node-id="DuFLHk7dVF9TCFcoIJURVo">自展现层向下逐层依赖，引擎层被应用层复用；数据层与基础设施横向被所有层调用，形成「纵向分层 + 横向共享」的稳定结构。</div></div>
+        <div class="card" style="padding:6px 10px;" data-page-node-id="mpchosHF2g6428G7DGTeeq"><div class="ch" style="font-size:11px;" data-page-node-id="dDpMidyy7G6WIlolnErub4">引擎层是核心</div><div class="cb" data-page-node-id="LZ6SYyKbITbLqh0YKapdDn">7 大引擎把「流程、表单、建模、内容、消息、权限、报表」抽象为独立能力，应用层只做业务编排——<b data-page-node-id="JDfxVRdRIk8vKZWwND7CPs">换业务不换引擎</b>。</div></div>
+        <div class="card" style="padding:6px 10px;" data-page-node-id="6O2sapCuTdF4UhasjWF0hS"><div class="ch" style="font-size:11px;" data-page-node-id="TNG51nARTxBKtdjozSXXyj">对标要点</div><div class="cb" data-page-node-id="lsjCMlD6BfHH4Sl9emg2Y8">zk-OA 采用同构五层，但以 FastAPI 分层（Router→Service→Repository）替代传统 Java 中间件，<b data-page-node-id="dqZCUHLmxUCcdtTevhazEH">引擎为纯函数实现</b>，更易单测。</div></div>
+      </div>
+    </div></div>
+    <div class="sm" data-page-node-id="COVKG2WoQNMWtImqCWEKTG"><span class="smbar" data-page-node-id="0V1dLXHGqZKbJty32KFZeq"></span><span class="smtext" data-page-node-id="poCanJhFrpfAVhb7Y5WWny">总体架构 = <b data-page-node-id="9W8wWXVagT0FKAy2VFNVeQ">展现 / 应用 / 引擎 / 数据 / 基础设施</b> 五层；引擎层集中 <b data-page-node-id="e38xna1sw3KF9y7H5IoYUP">7 大引擎</b>，是 OA 产品差异化的主战场。</span>
+      <span class="smspacer" data-page-node-id="Hif4wQGcPZsu4e3nptJRGT"></span><span class="chip" data-page-node-id="SIHGDF5C3jr67lOiXwWX2I">5 Layers</span><span class="chip" data-page-node-id="aeAk6atMeKfGiF9lH0C1mJ">7 Engines</span></div>
+    <div class="ft" data-page-node-id="rIrRurAoTddXdf29rHVQmh"><span data-page-node-id="HFcBktKVvGql0gqx1aMmUu">中科智电 · OA 系统架构与全流程</span><span class="prog" data-page-node-id="GyCIhJQXMZ5H3TH7PKD4S6"><i style="width:33%" data-page-node-id="NmruIVxd9jj2Fq02BbjBfe"></i></span><span data-page-node-id="Gyo5kGLSlj84jqXPAozhQG">04/15</span></div>
+  </section>
+
+  <!-- P05 主流 OA 引擎矩阵 -->
+  <section class="slide" data-page-node-id="B1GK56cQza7TYidV8Jircj">
+    <div class="hd" data-page-node-id="ihZv4P3jd8WN1V2O8vbBf4"><div class="hl" data-page-node-id="3QpOVwdgUgAQLaRyZNwRLl"><div class="eyebrow" data-page-node-id="GHSwNqsAnNtbGex7GeJix8">PART 01 · 技术底座</div><h2 class="ptitle" data-page-node-id="4uIxaxzt7EQqh3KfGRu2M9">主流 OA · 七大引擎能力矩阵</h2></div>
+      <div class="hr" data-page-node-id="h4RKYqyxkW5JM0ZBCnLoJi"><span class="tag" data-page-node-id="CYlXwWydqU8lGhb4PKW4oD">引擎矩阵</span><span class="lamp" data-page-node-id="bEX2MvfR9fD9H2wdgwUnuM"></span><span class="pgnum" data-page-node-id="hs6MlZVcnZJBM9YcFoFVr1">05 / 15</span></div></div>
+    <div class="ct" data-page-node-id="KfxefFK9a4kxyCKTKbnqgU"><div class="wrap" data-page-node-id="xTwgYGO3tuSFYSlOAA5qmw">
+      <div class="grid g4" style="flex:1;" data-page-node-id="Mn0PVPowT4ihVvbcSgUPG5">
+        <div class="card" data-page-node-id="A0KbZDhTIqq0GTSQnj3DU1"><div class="ch" data-page-node-id="uuB29g3C4IdVgiocJ30EiS"><span class="ic" data-page-node-id="BZXvHZxLDuF2CW98AgTLZe">WF</span>流程引擎</div><div class="cb" data-page-node-id="To4nDPeayZRtkQ2wCGVgZB">驱动审批流转的核心：图遍历、条件分支、会签 / 加签、超时升级。决定流程能否「任意画、正确跑」。</div><div class="chiprow" data-page-node-id="yCLfy0gwyRl2uK4DcQDCpZ"><span data-page-node-id="I2rVEFiVAVM2tvqpRWi1cu">会签</span><span data-page-node-id="2nZJ4ebuBBRQa78yBups6n">加签</span><span data-page-node-id="XqWXbGhh8RvFoDLB2YWofp">条件分支</span></div></div>
+        <div class="card" data-page-node-id="viyuqVu6CZqNMnJd6j8blm"><div class="ch" data-page-node-id="Yome00ydGVTFYq1jw6ywtB"><span class="ic" data-page-node-id="yH6zvR7hiKJCUhyDTqzqE6">FM</span>表单引擎</div><div class="cb" data-page-node-id="jDMMy0SYr7A0KdrAjA796c">可视化拖拽生成业务表单，字段类型 / 校验规则 / 布局配置化，与流程节点绑定形成「表单 + 流程」组合。</div><div class="chiprow" data-page-node-id="vhqHTr7h86X3ZynA9gnDsy"><span data-page-node-id="eB99VA2edWFklcthHoHsmr">字段类型</span><span data-page-node-id="rsilPM7qRQJ2ifMFIJkuhR">校验规则</span><span data-page-node-id="F3dmBjK0oq48ZFZGnFlxl4">布局</span></div></div>
+        <div class="card" data-page-node-id="kP2Z7YKESHCxDMCGA4eECS"><div class="ch" data-page-node-id="1LIiHZj3FQjPAYrtaeAv9q"><span class="ic" data-page-node-id="8rmKstkQ6Oz7G7z57T6dBm">MD</span>建模引擎</div><div class="cb" data-page-node-id="cC42zSGnb4GJNXkTffPh61">零代码建业务台账：定义实体与字段，发布即录入。主流方案多走动态建表或元数据 + JSON 列两条路线。</div><div class="chiprow" data-page-node-id="HTbQL4qEWfOHYHRtR2S8sL"><span data-page-node-id="FN3A47r4n5qeV1Kg2JSHXQ">实体定义</span><span data-page-node-id="COHDc07QXIYzLVa4U1qXiW">动态数据</span><span data-page-node-id="K4ivUCo8fj1Vvi3IaGmZMF">零 DDL</span></div></div>
+        <div class="card" data-page-node-id="0DVKnzkcL75EG8x0DjoIvQ"><div class="ch" data-page-node-id="Abk40tUFKxMkCRGaam6MhS"><span class="ic" data-page-node-id="ABthLC8O5urzxzvwIVlxIj">CT</span>内容引擎</div><div class="cb" data-page-node-id="mJw43a6ASuSNqMrrOoCypj">文档集中管理与受控分发：元数据、版本、鉴权下载、分类检索，是知识沉淀与合规留痕的载体。</div><div class="chiprow" data-page-node-id="idoi7XboWW0lt5jez1tvQH"><span data-page-node-id="WdqSiJOLUvJSEVbJDgMMTt">版本</span><span data-page-node-id="go1Pj87vT9bCznmV66J0G6">鉴权下载</span><span data-page-node-id="TH9L8IzuKd4hanWJPVHo1C">检索</span></div></div>
+        <div class="card" data-page-node-id="R2uWv7yZGeFgRHBNMT1ttX"><div class="ch" data-page-node-id="5XsobE5cHeQmfDQU4f6HAj"><span class="ic" data-page-node-id="wUtLxXO2tFP3NTkDnCdgmX">MS</span>消息引擎</div><div class="cb" data-page-node-id="J8GL5K0RrrG7HJEH1KstKj">统一待办与通知触达：站内信、邮件、短信、IM 多通道，支持实时推送与已读回执，保障流程不「卡壳」。</div><div class="chiprow" data-page-node-id="NQGq7LQ515rMT95ICRkeZo"><span data-page-node-id="HHPDEL7WSuq81oAEEaxejS">多通道</span><span data-page-node-id="fsQMqYL12WDoclrYB38blt">实时推送</span><span data-page-node-id="34GHRCcGYxldzlMaqBrmYW">回执</span></div></div>
+        <div class="card" data-page-node-id="PWBwrtE7d2dZFA93zCsSwA"><div class="ch" data-page-node-id="8tjkPM4j0BVLVmpG7gA60W"><span class="ic" data-page-node-id="taSo4oRhtjRSUHELbo5SwA">RB</span>权限引擎</div><div class="cb" data-page-node-id="88kotHpDMFTuZOHbrLWESO">以 RBAC 为核：用户—角色—权限码三层映射，支持菜单 / 按钮 / 数据行多级管控与组织维度授权。</div><div class="chiprow" data-page-node-id="WOQi2LfqhDPqfLS8WX0d9o"><span data-page-node-id="FS5KbtJH3nYoXWQ1XOzPs6">RBAC</span><span data-page-node-id="Jtj3D2Wx6Z3T5Lx3VqHqWu">权限码</span><span data-page-node-id="AW48IkUH7mr1EQTgROExH3">数据行</span></div></div>
+        <div class="card" data-page-node-id="9Xw1yxaWNtQfEfY4CgiP7M"><div class="ch" data-page-node-id="ZPI1f1VFYeKHYspdLL5PMD"><span class="ic" data-page-node-id="DxoGxDjbtlp5gbpbx559JY">RP</span>报表引擎</div><div class="cb" data-page-node-id="cJ3GmgH367pJQ7Pe9OSCCQ">把流程与业务数据转成管理视图：流程效率、费用分布、考勤统计，支持仪表盘与导出下钻。</div><div class="chiprow" data-page-node-id="Wyx6BLMngIfDzJrwjxv61C"><span data-page-node-id="Am3M4EivNyZWvrZI8hxYLq">看板</span><span data-page-node-id="px0b9tVfoNaSduHMRt5vYd">统计</span><span data-page-node-id="oBm1PMjHetDhKNK7eJ16Yd">导出</span></div></div>
+        <div class="card accent" data-page-node-id="y1udsiQUSA8eDhFBPOIWHK"><div class="ch" data-page-node-id="ciZu4KGtCa16SYEOhEhJdu"><span class="ic" style="background:rgba(4,18,31,.2);border-color:transparent;color:#04121f;" data-page-node-id="JVVktyh0JzJ83YjmX6ntcK">＋</span>集成引擎</div><div class="cb" data-page-node-id="QbRpmKS7xhnHUAtADgMWMv">横向扩展位：对接 ERP / CRM / 财务 / 钉钉企微，以 API 与事件总线打通异构系统，是 OA 从「孤岛」到「中枢」的关键。</div><div class="chiprow" data-page-node-id="UZsUlViCSMneYPMPDIAY0K"><span data-page-node-id="MSEPzBJ6MDB6OYFzWjr24G">API</span><span data-page-node-id="jP5ba6WSL0WJuJPtIj47yP">事件总线</span><span data-page-node-id="ktp4xbFktFXyiGKUojLObN">单点登录</span></div></div>
+      </div>
+    </div></div>
+    <div class="sm" data-page-node-id="wqm285AN9F6s1onA1mXrlO"><span class="smbar" data-page-node-id="iBnkZRn4cDtF0i4aGPhw4K"></span><span class="smtext" data-page-node-id="v62tyAWh78fbO3gJtG5mGS">七大引擎 + 集成引擎 = OA 的 <b data-page-node-id="4zF6CRePMdS9Y1D5fSWVME">技术底座</b>；引擎成熟度直接决定 <b data-page-node-id="BwFCUu0GYtx6nMLGhGE5X3">业务可配置化程度</b> 与二次开发成本。</span>
+      <span class="smspacer" data-page-node-id="Ry0mld1lsowjnI6Sjd7kpr"></span><span class="chip" data-page-node-id="mVCtEu9w58d9SOOuASeFRx">8 Engines</span><span class="chip" data-page-node-id="mFGiFNH5Ci3coSGmQ3DXBg">Low-Code</span></div>
+    <div class="ft" data-page-node-id="TPdxKui8kofSKgumcD39zk"><span data-page-node-id="HzsyqWosHjdntqnQwZGwvS">中科智电 · OA 系统架构与全流程</span><span class="prog" data-page-node-id="cviBulJlgV9TqlWldEvRND"><i style="width:40%" data-page-node-id="y1a5L2Eo5l1o8qJHEyYpCh"></i></span><span data-page-node-id="9IkNCsA8nP7aPmjJNFlgPD">05/15</span></div>
+  </section>
+
+  <!-- P06 主流 OA 端到端全流程 -->
+  <section class="slide" data-page-node-id="AvWlPAs7BgNIvTFF39MKUE">
+    <div class="hd" data-page-node-id="Z34aKj7BGaWeqeGeiAqeM1"><div class="hl" data-page-node-id="huTru0TgwF11O0nuh2qJNw"><div class="eyebrow" data-page-node-id="8HKHdyvagXWMbz9pBC7qpZ">PART 01 · 业务全流程</div><h2 class="ptitle" data-page-node-id="9YslxPdMGujAptatXFoegd">主流 OA · 端到端审批全流程图</h2></div>
+      <div class="hr" data-page-node-id="FLOcFafHc27xEtdacaZHE1"><span class="tag" data-page-node-id="R5Gm5101BIsC6VAM1hPKFr">全流程图</span><span class="lamp" data-page-node-id="HYkiRl0LFB4zmY3LlAAtp0"></span><span class="pgnum" data-page-node-id="WQgbCuqOuZHOEWAi1y3cfT">06 / 15</span></div></div>
+    <div class="ct" data-page-node-id="wGogypLetg8GJcjSINTKL1"><div class="wrap" data-page-node-id="G5NVGHzLFC8gRAC7AhoVqE">
+      <svg viewBox="0 0 960 340" style="width:100%;flex:1;min-height:270px;" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans SC, sans-serif">
+  <defs>
+    <marker id="f-ar" markerWidth="8" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0,0 L0,8 L8,4 z" fill="#0b7bc4"/></marker>
+    <marker id="f-gr" markerWidth="8" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0,0 L0,8 L8,4 z" fill="#0f9d6f"/></marker>
+    <marker id="f-rd" markerWidth="8" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0,0 L0,8 L8,4 z" fill="#ef4444"/></marker>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="340" rx="6" fill="rgba(11,47,92,.045)" stroke="rgba(11,47,92,.06)"/>
+  <line x1="0" y1="68" x2="960" y2="68" stroke="rgba(11,47,92,.06)"/>
+  <line x1="0" y1="136" x2="960" y2="136" stroke="rgba(11,47,92,.06)"/>
+  <line x1="0" y1="204" x2="960" y2="204" stroke="rgba(11,47,92,.06)"/>
+  <line x1="0" y1="272" x2="960" y2="272" stroke="rgba(11,47,92,.06)"/>
+  <line x1="96" y1="0" x2="96" y2="340" stroke="rgba(11,123,196,.25)"/>
+
+  <rect x="0" y="0" width="96" height="68" fill="rgba(11,123,196,.14)"/><text x="48" y="38" text-anchor="middle" font-size="11" font-weight="700" fill="#0b7bc4">发起人 / 员工</text>
+  <rect x="0" y="68" width="96" height="68" fill="rgba(217,119,6,.12)"/><text x="48" y="106" text-anchor="middle" font-size="11" font-weight="700" fill="#e08a00">直属主管</text>
+  <rect x="0" y="136" width="96" height="68" fill="rgba(109,40,217,.12)"/><text x="48" y="174" text-anchor="middle" font-size="11" font-weight="700" fill="#6d28d9">部门负责人</text>
+  <rect x="0" y="204" width="96" height="68" fill="rgba(5,150,105,.12)"/><text x="48" y="242" text-anchor="middle" font-size="11" font-weight="700" fill="#0f9d6f">职能审核</text>
+  <rect x="0" y="272" width="96" height="68" fill="rgba(100,116,139,.12)"/><text x="48" y="310" text-anchor="middle" font-size="11" font-weight="700" fill="#64748b">系统 / 归档</text>
+
+  <g font-size="10.5">
+    <rect x="130" y="22" width="120" height="36" rx="5" fill="rgba(11,123,196,.2)" stroke="rgba(11,123,196,.45)"/><text x="190" y="44" text-anchor="middle" fill="#0a6aa8" font-weight="600">起草申请</text>
+    <rect x="650" y="22" width="120" height="36" rx="5" fill="rgba(11,123,196,.2)" stroke="rgba(11,123,196,.45)"/><text x="710" y="44" text-anchor="middle" fill="#0a6aa8" font-weight="600">查看结果</text>
+    <rect x="290" y="90" width="120" height="36" rx="5" fill="rgba(217,119,6,.18)" stroke="rgba(217,119,6,.45)"/><text x="350" y="112" text-anchor="middle" fill="#b45309" font-weight="600">主管审批</text>
+    <rect x="450" y="158" width="120" height="36" rx="5" fill="rgba(109,40,217,.18)" stroke="rgba(109,40,217,.45)"/><text x="510" y="180" text-anchor="middle" fill="#6d28d9" font-weight="600">部门复核</text>
+    <rect x="610" y="226" width="120" height="36" rx="5" fill="rgba(5,150,105,.18)" stroke="rgba(5,150,105,.45)"/><text x="670" y="248" text-anchor="middle" fill="#047857" font-weight="600">职能审核</text>
+    <rect x="770" y="294" width="150" height="36" rx="5" fill="rgba(100,116,139,.16)" stroke="rgba(100,116,139,.4)"/><text x="845" y="316" text-anchor="middle" fill="#475569" font-weight="600">归档 · 回写 · 通知</text>
+  </g>
+
+  <polygon points="530,90 566,108 530,126 494,108" fill="rgba(217,119,6,.16)" stroke="rgba(217,119,6,.5)"/>
+  <text x="530" y="112" text-anchor="middle" font-size="9" fill="#b45309">通过?</text>
+
+  <path d="M250,40 H350 V90" fill="none" stroke="#0b7bc4" stroke-width="1.6" marker-end="url(#f-ar)"/>
+  <path d="M410,108 H494" fill="none" stroke="#0b7bc4" stroke-width="1.6" marker-end="url(#f-ar)"/>
+  <path d="M530,126 V158" fill="none" stroke="#0b7bc4" stroke-width="1.6" marker-end="url(#f-ar)"/>
+  <path d="M570,176 H670 V226" fill="none" stroke="#0b7bc4" stroke-width="1.6" marker-end="url(#f-ar)"/>
+  <path d="M730,244 H845 V294" fill="none" stroke="#0b7bc4" stroke-width="1.6" marker-end="url(#f-ar)"/>
+  <path d="M920,312 H938 V40 H770" fill="none" stroke="#0f9d6f" stroke-width="1.4" stroke-dasharray="5,4" marker-end="url(#f-gr)"/>
+  <path d="M530,90 V14 H190 V22" fill="none" stroke="#ef4444" stroke-width="1.3" stroke-dasharray="4,3" marker-end="url(#f-rd)"/>
+
+  <text x="540" y="148" font-size="8.5" font-weight="600" fill="#0b7bc4">是</text>
+  <text x="300" y="30" font-size="8.5" fill="#ef4444">驳回 → 退回</text>
+  <text x="930" y="190" text-anchor="end" font-size="8.5" fill="#0f9d6f">结果回写 / 实时通知</text>
+  <text x="24" y="332" font-size="9" font-family="Rajdhani" fill="#8199b0">FLOW · 5 LANES / 6 STEPS</text>
+</svg>
+      <div class="grid g4" style="flex-shrink:0;" data-page-node-id="5fo6y8rTrw2V1se0ZkvuY9">
+        <div class="card" style="padding:6px 9px;" data-page-node-id="c0gfvcH8JfAIuH3vMSITY9"><div class="cb" data-page-node-id="zrC6e7ED595i6AfEJopLb7"><b data-page-node-id="WdwSUQ462ijSIrImRHo9CV">① 发起</b> · 员工按表单引擎生成的动态表单起草，附件与单据绑定，提交即触发流程实例。</div></div>
+        <div class="card" style="padding:6px 9px;" data-page-node-id="7CT9Be9oR7Mus27TVFpjon"><div class="cb" data-page-node-id="zfsBiPnQETB1mN5vhxdkJV"><b data-page-node-id="GR3OyAv2HRWJ7VvIZu9HMA">② 审批</b> · 主管 / 部门逐级审批，支持会签、加签、转办；条件分支自动路由到对应职能。</div></div>
+        <div class="card" style="padding:6px 9px;" data-page-node-id="2KBfYCujffsbU7vT8JkAZx"><div class="cb" data-page-node-id="xUaambTxKtXbrGQ5LEzCwb"><b data-page-node-id="4Ze3zXhQ8QWFbChHDZ2Gv2">③ 归档</b> · 通过的流程自动归档至内容引擎，形成可检索、可审计的业务留痕。</div></div>
+        <div class="card" style="padding:6px 9px;" data-page-node-id="hywXu4sCGAMsYTaDFgwfDY"><div class="cb" data-page-node-id="3sw9MsGw4NzhpC8h0f0iBi"><b data-page-node-id="touThdvvpCkEmH1Y1mvOcW">④ 回写</b> · 终态回写业务单据状态，消息引擎实时通知发起人，形成闭环。</div></div>
+      </div>
+    </div></div>
+    <div class="sm" data-page-node-id="hbt2OMKiblQkzvXrgFWa6E"><span class="smbar" data-page-node-id="4ONd1mNdSmgA4dGJe6W7GU"></span><span class="smtext" data-page-node-id="LlzgHD17GLGpyLJRnLx75s">端到端流程 = <b data-page-node-id="vQoEipDTnMQtNo5vUGTSA4">5 泳道 × 6 步</b>：发起 → 审批（含条件分支）→ 归档 → <b data-page-node-id="maD2Sq53I1M04HMOQJxTEY">结果回写 + 实时通知</b>，闭环是成熟度的分水岭。</span>
+      <span class="smspacer" data-page-node-id="frRUysdw2kW8IW60BwvnoG"></span><span class="chip" data-page-node-id="kAarRaVOEATYVXTWLqLzqA">Swimlane</span><span class="chip" data-page-node-id="HS7rEPW2YjkO1TO2q28SU1">闭环</span></div>
+    <div class="ft" data-page-node-id="NRTKgC318Ir42AlOsRPG56"><span data-page-node-id="LBLOeIP4VYSE99yPjMtTTW">中科智电 · OA 系统架构与全流程</span><span class="prog" data-page-node-id="9kJ8VA6iyuZNo3vPi7hR8l"><i style="width:47%" data-page-node-id="rhtF4lDlYKDelvlcjDrHMT"></i></span><span data-page-node-id="uZ3pPXSWAnLQjVyGoophtd">06/15</span></div>
+  </section>
+
+  <!-- P07 分隔 Part2 -->
+  <section class="slide divider" data-page-node-id="SrtzebNsImSireeeDWyABu">
+    <div class="ct" data-page-node-id="3acBQoTWYFwNO1Q3ACNCmn"><div class="divwrap" data-page-node-id="j3HlSQiUYqICg3yMi8tHE4">
+      <div class="divghost" data-page-node-id="zo5zGnEoheDqv6g7j1ewMZ">02</div>
+      <div class="diveyebrow" data-page-node-id="U0UCpKRYhZaUQxcdvza2nq">PART 02</div>
+      <div class="divnum" data-page-node-id="ES2sHjp5HpCyn7M8ryIXWQ">02</div>
+      <div class="divname" data-page-node-id="X7cf7udUnEt0M6MUucwuQP">zk-OA 系统现状</div>
+      <div class="divdesc" data-page-node-id="bhNfywmycJ6PaCIXGUsn5W">中科智电自研 OA —— 以 <b data-page-node-id="mEU6jNzlXHAuF6KzhiakoI">FastAPI + React 19</b> 全栈实现，对齐泛微 e-cology 七大引擎路线图。<b data-page-node-id="0DdXGkHUX3sqp7BsBgBVqS">6 大功能模块</b>已上线，<b data-page-node-id="9v6oyKKamApyTebpW4bEDR">七大引擎</b>按 P0→P4 分批落地，后端 <b data-page-node-id="r1UAV3h7OpjrXEYARvKI7r">59 项测试</b>与 <b data-page-node-id="RWM7YEdz6U2j8OfUNRuvDB">128 项 HTTP 冒烟</b>全绿。</div>
+    </div></div>
+    <div class="ft" style="z-index:2;" data-page-node-id="5MuUAW6P6LsVxEbGDkLFZA"><span data-page-node-id="XhdLS1oDGEMz9rLUqehIsO">PART 02 · zk-OA 系统现状</span><span class="prog" data-page-node-id="mWJlQTzVUV4DZ8Wr3UU8sT"><i style="width:53%" data-page-node-id="AhuqFfuRPWCZKMFq7lFP6O"></i></span><span data-page-node-id="RTX9xNRWFr2Uh1cU6E9NX6">07/15</span></div>
+  </section>
+
+  <!-- P08 zk-OA 功能模块图 -->
+  <section class="slide" data-page-node-id="eG41DlFpObTrYEvGNkOrsb">
+    <div class="hd" data-page-node-id="rvF02s4cNvErmDgFf9W8yK"><div class="hl" data-page-node-id="Q5wRSuf7GdQZN4yOz7sI88"><div class="eyebrow" data-page-node-id="XygSi12RmrmJKgCeBSUHsN">PART 02 · 模块地图</div><h2 class="ptitle" data-page-node-id="k1Op2zOqIWzVnG2pYsSYUQ">zk-OA · 六大功能模块图</h2></div>
+      <div class="hr" data-page-node-id="kALqzoFo4DqFWlwDA5zTYK"><span class="tag" data-page-node-id="fNO5fnB5AL4H6ji5SsvXHI">模块图</span><span class="lamp" data-page-node-id="zBCghCd1yBlsWpMjB8Afv0"></span><span class="pgnum" data-page-node-id="1Xqw9ikHHnzE7rvIvF576a">08 / 15</span></div></div>
+    <div class="ct" data-page-node-id="RDe5fzXY5rMfnchXgEDVSh"><div class="wrap" data-page-node-id="CZUDQGmPlsre3fSCm9rahr">
+      <svg viewBox="0 0 960 372" style="width:100%;flex:1;min-height:340px;" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans SC, sans-serif" data-page-node-id="MMOHBkDZI5spFXMeqSvanb">
+        <defs data-page-node-id="LIpwzJRDWjtkwahqpwTmt7"><marker id="z-ar" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto" data-page-node-id="nU49eo7oiF41nfAQdn8jxX"><path d="M0,0 L0,6 L6,3 z" fill="#0b7bc4" data-page-node-id="XZRd9yLWQe5ATSudl13hiD"/></marker></defs>
+        <rect x="0" y="0" width="960" height="44" rx="6" fill="rgba(11,123,196,.12)" stroke="rgba(11,123,196,.35)" data-page-node-id="mZGFN8LVV3qECmxqFfZGHV"/>
+        <text x="16" y="27" font-size="12" font-weight="700" fill="#0b7bc4" data-page-node-id="K3Ag2zIBdnR6ICAySdfRqB">首页工作台</text>
+        <text x="180" y="27" font-size="10.5" fill="#3f5b78" data-page-node-id="L7WdmUn7pj2CJQgi4psKNR">角色化聚合 · 待办统计 · 快捷入口 · 运营概览（/api/portal/overview）</text>
+        <text x="944" y="27" text-anchor="end" font-size="9" font-family="Rajdhani" fill="#8199b0" data-page-node-id="BwXut5gizlVydRzCIaWEVm">PORTAL</text>
+        <g font-size="10.5" data-page-node-id="4gYNuBwKooKNM0IhgUOnDi">
+          <rect x="0" y="56" width="150" height="238" rx="6" fill="rgba(11,47,92,.045)" stroke="rgba(11,123,196,.25)" data-page-node-id="ymSZjK9OUvTKxGUMVmRCbK"/>
+          <rect x="0" y="56" width="150" height="30" rx="6" fill="rgba(11,123,196,.18)" data-page-node-id="gVGSzD5pHN30XDivFCRHHb"/><text x="75" y="76" text-anchor="middle" font-size="11.5" font-weight="700" fill="#0b2f5c" data-page-node-id="8Xcqs5uBox9i9ynLvCzBVb">流程审批</text>
+          <text x="75" y="106" text-anchor="middle" fill="#3f5b78" data-page-node-id="ZFtHBcE02eHFtTyZHSmgJ2">流程定义</text><text x="75" y="130" text-anchor="middle" fill="#3f5b78" data-page-node-id="kyWtNSwsAA5oQck67KB13p">我的待办</text><text x="75" y="154" text-anchor="middle" fill="#3f5b78" data-page-node-id="qggaLa1K0SqKzprYzYH7Go">会签 / 加签</text><text x="75" y="178" text-anchor="middle" fill="#3f5b78" data-page-node-id="uh4tuSD7xgQ5VIJREAXlM9">转办 / 撤回 / 催办</text><text x="75" y="202" text-anchor="middle" fill="#3f5b78" data-page-node-id="A2Y3qDp3RnX2GuugY4adIX">审批委托</text><text x="75" y="226" text-anchor="middle" fill="#3f5b78" data-page-node-id="I4tndxnsq0qnWKQ84Uhm6j">监控看板</text><text x="75" y="256" text-anchor="middle" font-size="9" font-family="Rajdhani" fill="#0b7bc4" data-page-node-id="r0yWQKjetCcNYsu5xLOxjd">wf:*</text>
+          <rect x="162" y="56" width="150" height="238" rx="6" fill="rgba(11,47,92,.045)" stroke="rgba(11,123,196,.25)" data-page-node-id="V0SDEJY3bfT9E2RAeg0UQD"/>
+          <rect x="162" y="56" width="150" height="30" rx="6" fill="rgba(11,123,196,.18)" data-page-node-id="RK70AMALHuedFsPAvtdHJJ"/><text x="237" y="76" text-anchor="middle" font-size="11.5" font-weight="700" fill="#0b2f5c" data-page-node-id="sNAKiIEwi9pWSaYKXhf1QV">人事管理</text>
+          <text x="237" y="106" text-anchor="middle" fill="#3f5b78" data-page-node-id="NFAO32XiASehRLou6yFwa6">员工 / 部门</text><text x="237" y="130" text-anchor="middle" fill="#3f5b78" data-page-node-id="GV1mTNT28PudLliAnGGFOl">角色权限</text><text x="237" y="154" text-anchor="middle" fill="#3f5b78" data-page-node-id="QXwXDWh62MZtfviBUivBQn">考勤打卡</text><text x="237" y="178" text-anchor="middle" fill="#3f5b78" data-page-node-id="2MQ9XTOd3Wk1E0vZL2CDGA">请假 / 加班</text><text x="237" y="202" text-anchor="middle" fill="#3f5b78" data-page-node-id="gT2gTboaYcghpEIBmZNPgx">月度统计</text><text x="237" y="226" text-anchor="middle" fill="#3f5b78" data-page-node-id="9x644bokKWyMPObp8LO8W8">Excel 导出</text><text x="237" y="256" text-anchor="middle" font-size="9" font-family="Rajdhani" fill="#0b7bc4" data-page-node-id="EeJ5KHQ2EvjqudyiwFMRUi">att:*</text>
+          <rect x="324" y="56" width="150" height="238" rx="6" fill="rgba(11,47,92,.045)" stroke="rgba(11,123,196,.25)" data-page-node-id="B3OIeBAcsFkBre1cFpKmwS"/>
+          <rect x="324" y="56" width="150" height="30" rx="6" fill="rgba(11,123,196,.18)" data-page-node-id="MBlQtONKEDuGDbw2GqzhA5"/><text x="399" y="76" text-anchor="middle" font-size="11.5" font-weight="700" fill="#0b2f5c" data-page-node-id="NBPvZyPBO39BpndDLjHZDa">行政办公</text>
+          <text x="399" y="106" text-anchor="middle" fill="#3f5b78" data-page-node-id="fsVGIPWxSKlYAOFq2bSZLE">公告通知</text><text x="399" y="130" text-anchor="middle" fill="#3f5b78" data-page-node-id="a3QKpGH5wB0RRkpR3vemCC">阅读回执</text><text x="399" y="154" text-anchor="middle" fill="#3f5b78" data-page-node-id="OJmQTCuK6GD5BYyxszGIhb">文档中心</text><text x="399" y="178" text-anchor="middle" fill="#3f5b78" data-page-node-id="nMDadZQgOLXkC3mJi4r97R">公文管理</text><text x="399" y="202" text-anchor="middle" fill="#3f5b78" data-page-node-id="FhZkaLLLvPz5Z6Fy1fwtC6">传阅 / 归档</text><text x="399" y="226" text-anchor="middle" fill="#3f5b78" data-page-node-id="aDCoQcWeXC7x6EHvNrAQ7q">版本历史</text><text x="399" y="256" text-anchor="middle" font-size="9" font-family="Rajdhani" fill="#0b7bc4" data-page-node-id="D4C2V0ZPSa8KiHsRc5rUNJ">doc:*</text>
+          <rect x="486" y="56" width="150" height="238" rx="6" fill="rgba(11,47,92,.045)" stroke="rgba(11,123,196,.25)" data-page-node-id="2xVe8kDyRxJYYxKGVN5t2G"/>
+          <rect x="486" y="56" width="150" height="30" rx="6" fill="rgba(11,123,196,.18)" data-page-node-id="xtW1Axx0C2dOJC5C7ErayN"/><text x="561" y="76" text-anchor="middle" font-size="11.5" font-weight="700" fill="#0b2f5c" data-page-node-id="yPyluJeBGTqqDRo5chDf9S">财务管理</text>
+          <text x="561" y="106" text-anchor="middle" fill="#3f5b78" data-page-node-id="EgzRqyuVFFZGl3nIMcfpOG">报销单</text><text x="561" y="130" text-anchor="middle" fill="#3f5b78" data-page-node-id="QMaWT7ExlQWbQbLzVLoH85">内置审批流</text><text x="561" y="154" text-anchor="middle" fill="#3f5b78" data-page-node-id="9Bt9xbYoWLGCkk3HOBWOGp">打款确认</text><text x="561" y="178" text-anchor="middle" fill="#3f5b78" data-page-node-id="PPgwOvy5WI0uG6BNxgKFr1">统计看板</text><text x="561" y="202" text-anchor="middle" fill="#3f5b78" data-page-node-id="I1VXJZXeabT5wMR9GNj80T">xlsx 导入</text><text x="561" y="226" text-anchor="middle" fill="#3f5b78" data-page-node-id="39kmaKR2FnPTjLpd7sxqCs">导出</text><text x="561" y="256" text-anchor="middle" font-size="9" font-family="Rajdhani" fill="#0b7bc4" data-page-node-id="GcMvFFJrInvBIgQtfFg3gp">expense:*</text>
+          <rect x="648" y="56" width="150" height="238" rx="6" fill="rgba(11,47,92,.045)" stroke="rgba(11,123,196,.25)" data-page-node-id="ZHIHErY6ULw1UCRpRBI0X4"/>
+          <rect x="648" y="56" width="150" height="30" rx="6" fill="rgba(11,123,196,.18)" data-page-node-id="pdXQzAZlEWYk7XWWMz3lSC"/><text x="723" y="76" text-anchor="middle" font-size="11.5" font-weight="700" fill="#0b2f5c" data-page-node-id="VLg43sZwy3bgQ7ZV41vW3x">系统管理</text>
+          <text x="723" y="106" text-anchor="middle" fill="#3f5b78" data-page-node-id="0ivBZCiBfNjYyW0t9rlesh">组织权限</text><text x="723" y="130" text-anchor="middle" fill="#3f5b78" data-page-node-id="scSCxCM3C6ne6XNHqGFRIZ">角色管理</text><text x="723" y="154" text-anchor="middle" fill="#3f5b78" data-page-node-id="Zu2IPCzOtWFa477mF36k3F">日志中心</text><text x="723" y="178" text-anchor="middle" fill="#3f5b78" data-page-node-id="1YO7awzX1bZv5HU0XRsVw2">运维中心</text><text x="723" y="202" text-anchor="middle" fill="#3f5b78" data-page-node-id="vRD0i09JLCPULU25BIWNot">建模引擎</text><text x="723" y="226" text-anchor="middle" fill="#3f5b78" data-page-node-id="EGWOjrblBgaKm5PVZo5zOF">数据字典</text><text x="723" y="256" text-anchor="middle" font-size="9" font-family="Rajdhani" fill="#0b7bc4" data-page-node-id="jeyzRAKNkVgzMj8NANoRfm">org:*</text>
+          <rect x="810" y="56" width="150" height="238" rx="6" fill="rgba(11,47,92,.045)" stroke="rgba(11,123,196,.25)" data-page-node-id="kkjWYfBniqX9pR09LxpAQO"/>
+          <rect x="810" y="56" width="150" height="30" rx="6" fill="rgba(11,123,196,.18)" data-page-node-id="kjsqzXGGzX4Nn1jm5T7kgD"/><text x="885" y="76" text-anchor="middle" font-size="11.5" font-weight="700" fill="#0b2f5c" data-page-node-id="nKYfB3iXBJYNKNUWd5DdmR">电子签单</text>
+          <text x="885" y="106" text-anchor="middle" fill="#3f5b78" data-page-node-id="Pl5sg3758mrs2Oeddl1djM">Canvas 签名</text><text x="885" y="130" text-anchor="middle" fill="#3f5b78" data-page-node-id="1Z6PFH6WRcHFByrAOE66MI">SHA-256 校验</text><text x="885" y="154" text-anchor="middle" fill="#3f5b78" data-page-node-id="ZbSPymK9cj8bW2J16jDMsk">签名留痕</text><text x="885" y="178" text-anchor="middle" fill="#3f5b78" data-page-node-id="WBCrI2x83dNLFYIUuPzSCA">关联单据</text><text x="885" y="202" text-anchor="middle" fill="#3f5b78" data-page-node-id="9CtlQFqxBzxG9gLqiHq0jA">单据追溯</text><text x="885" y="226" text-anchor="middle" fill="#3f5b78" data-page-node-id="DhpKoZdQNLTiuOIQuJWW04">合规存证</text><text x="885" y="256" text-anchor="middle" font-size="9" font-family="Rajdhani" fill="#0b7bc4" data-page-node-id="7ZHcPDU8OffJoKmC1h9sHf">sign</text>
+        </g>
+        <rect x="0" y="304" width="960" height="44" rx="6" fill="rgba(5,150,105,.10)" stroke="rgba(5,150,105,.3)" data-page-node-id="8bSxVI3SquVcGbD2pin4dQ"/>
+        <text x="16" y="331" font-size="12" font-weight="700" fill="#0f9d6f" data-page-node-id="9BP3iDcdTKEwbFVuAPvEd1">引擎支撑</text>
+        <text x="120" y="331" font-size="10.5" fill="#3f5b78" data-page-node-id="IOlBtyvdUBDNsWNsXe8Kcs">流程引擎 · 建模引擎 · 日志中心 · 内容引擎 · 消息中心 · 报表中心 · 组织权限 · 实时总线 · 电子签单</text>
+        <text x="944" y="331" text-anchor="end" font-size="9" font-family="Rajdhani" fill="#8199b0" data-page-node-id="97egAXBPa0FdCV5eKEJxoa">ENGINES</text>
+        <line x1="480" y1="44" x2="480" y2="56" stroke="#0b7bc4" stroke-width="1.5" marker-end="url(#z-ar)" data-page-node-id="7iEV8mUG1xfaOFy60ZGREM"/>
+        <line x1="480" y1="294" x2="480" y2="304" stroke="#0b7bc4" stroke-width="1.5" marker-end="url(#z-ar)" data-page-node-id="7PgIyQ1Tn7urowxqbaMLnv"/>
+      </svg>
+      <div class="grid g3" style="flex-shrink:0;" data-page-node-id="rGBsOl1LYnLJDQfM7zUmDw">
+        <div class="card" style="padding:6px 10px;" data-page-node-id="nX8npKrYyWDXcVaF1UL2TA"><div class="cb" data-page-node-id="GNS9hpXBu8KxQ58XUJMyZu"><b data-page-node-id="Hyrwjmx7nGilmmOAFaC8PO">权限码驱动</b> · 每模块以独立权限码接入（<em data-page-node-id="iMR4RLsGXFSLlf9PlSuCyh">wf:* / att:* / expense:* / doc:* / model:* / audit:*</em>），RBAC 边界 <b data-page-node-id="CWbApt1v01i03TYVBrP6pn">16/16</b> 项通过。</div></div>
+        <div class="card" style="padding:6px 10px;" data-page-node-id="pooKu6jBX8bFosVWildnKX"><div class="cb" data-page-node-id="Jg1JSANPweJqVWjN2PoyAT"><b data-page-node-id="l9WECwIDOamxHMjLSSVLLq">业务闭环完整</b> · 考勤「打卡→判定→加班→统计」、报销「草稿→提交→审批→打款」均为端到端可跑闭环。</div></div>
+        <div class="card" style="padding:6px 10px;" data-page-node-id="ROgYbRDVw9Pvado72W21ne"><div class="cb" data-page-node-id="dqOTPKUbPF85mVrvHSpRbD"><b data-page-node-id="pOsbIKoMUqOsxTN9VrlRGZ">新增 4 模块</b> · P4 补齐考勤(12 端点)、委托(4)、报销(9)、公文(7)，前端 <b data-page-node-id="SreJKFtuMO5KRUe84e1wPm">4 个完整页面</b>，TS 严格 0 错误。</div></div>
+      </div>
+    </div></div>
+    <div class="sm" data-page-node-id="t9P4ULuqPgzdkUc4Wxzfw7"><span class="smbar" data-page-node-id="OQaZB2gHHdcl4L5EImTz4R"></span><span class="smtext" data-page-node-id="ksQsFDe4A8U6VE2ppmzis2">zk-OA 已落地 <b data-page-node-id="AsFmEol6GZfnZYOIIQogrU">6 大模块 · 40+ 端点</b>，以权限码为边界、以引擎为底座，功能范围与主流 OA 能力域一一对应。</span>
+      <span class="smspacer" data-page-node-id="aEgCnFRVoH3lVjKn3L599t"></span><span class="chip" data-page-node-id="ZxTK2Fa655cCX5QCsQo78c">6 Modules</span><span class="chip" data-page-node-id="ldG46Df82Re8zQgyJhu8pC">40+ API</span><span class="chip" data-page-node-id="4QShUafdQcUaahSnIWDNhb">RBAC 16/16</span></div>
+    <div class="ft" data-page-node-id="E4X3iYxlAQCUCqJFaDwjkH"><span data-page-node-id="gaN5DIkpAEbN3mIJV6xTBu">中科智电 · OA 系统架构与全流程</span><span class="prog" data-page-node-id="dGH4m3hwn0xL5cryiPDvE5"><i style="width:60%" data-page-node-id="RyvqjOxXDVp4Ra8TOuTCtA"></i></span><span data-page-node-id="5JgF9tYu8lV3ESYpVHOinq">08/15</span></div>
+  </section>
+
+  <!-- P09 zk-OA 技术架构 -->
+  <section class="slide" data-page-node-id="KE8CmRC7mPzBej8aFGsVk5">
+    <div class="hd" data-page-node-id="Kz7RCpHwSzHcb6snLDBmFd"><div class="hl" data-page-node-id="6i7ooyYiEe0XyoYAThlsjD"><div class="eyebrow" data-page-node-id="kAX9QnrJVsexwVUiFYNHKy">PART 02 · 技术架构</div><h2 class="ptitle" data-page-node-id="P8uIIWYaLWlJPM7tKIiHhq">zk-OA · 技术架构分层图</h2></div>
+      <div class="hr" data-page-node-id="OFuP3KWLOrnyGDIIqTLkPT"><span class="tag" data-page-node-id="Bexss9P7FFk1eB40OGFHd3">架构图</span><span class="lamp" data-page-node-id="6njN4NDCJrLxQXK5YdblVo"></span><span class="pgnum" data-page-node-id="jOD56Viys5uEv8AzBO9uYG">09 / 15</span></div></div>
+    <div class="ct" data-page-node-id="RTnHn2aSey8OAvMWaFucVl"><div class="wrap" data-page-node-id="UMSLkHJgTMn31sdvdL2zpk">
+      <div class="arch" style="flex:1;" data-page-node-id="A8MxiT8kTdB2bTQbmS83XD">
+        <div class="layer l1" data-page-node-id="AyjN9iBV3SsEVHWnpSSeOK"><div class="lab" data-page-node-id="PzSO20X1TPNB0YonqITnwl"><div class="len" data-page-node-id="ujK6MptSNWn02sT95gTPvJ">FRONTEND</div><div class="lcn" data-page-node-id="EcZRZ2ebZ4jjGnhhdUJ36a">前端展示层</div></div>
+          <div class="cells" data-page-node-id="yHG9tbS84fCPPvTvi7WlQF"><div class="cell" data-page-node-id="FxFyDIqdelAIFCbJdzX6Oj">React 19</div><div class="cell" data-page-node-id="9VJs2bxQTUTvn4J2EgEtmP">AntD 5</div><div class="cell" data-page-node-id="PP3UpQXX5nwd9vJ4blYwbz">TypeScript</div><div class="cell" data-page-node-id="a8N7dh2Ih8fYkKYja0lOgy">Vite 6</div><div class="cell" data-page-node-id="dtJrEv7JgoLnEL4vBt9RnC">TanStack Query</div><div class="cell" data-page-node-id="LuUkBwLAjGZzVJQnN68UuP">axios 客户端</div></div></div>
+        <div class="arrowdown" data-page-node-id="GiaZggqJc1WHiB9WsBdAix">▼</div>
+        <div class="layer l2" data-page-node-id="6txuH1y2S0K97rhnStHIbd"><div class="lab" data-page-node-id="dZhuOvUTs1cNUgtmLe6YH4"><div class="len" data-page-node-id="aIsOL5svP4gBpLwu6A1moa">GATEWAY</div><div class="lcn" data-page-node-id="Jx5kJnmzEdTCHSAHvOGeFD">接入层</div></div>
+          <div class="cells" data-page-node-id="T5viSx8q9Fic76bNBnwStP"><div class="cell" data-page-node-id="ZlAty8vRuVmCLyKo7y5jQt">Nginx（SPA 回退）</div><div class="cell" data-page-node-id="6lXk9DEadCBHHuOw8bDSzM">SSE 长连接代理</div><div class="cell" data-page-node-id="RnT03DIDSWGCwpXxVWaPa1">CORS 显式来源</div><div class="cell" data-page-node-id="qHuWBeJGGXS61mJRVVEMhG">JWT 双令牌鉴权</div><div class="cell" data-page-node-id="3XiOCDFBajUpo8UFfx2bA8">/health · /ready</div></div></div>
+        <div class="arrowdown" data-page-node-id="1vfmCnDLz350Y9cbSe5vZr">▼</div>
+        <div class="layer l4" data-page-node-id="Xe1i16HaEhtfPNh3EhQS6C"><div class="lab" data-page-node-id="LZ2EOznrhcGGJvAjnEs1WX"><div class="len" data-page-node-id="yd37QG3488LggvjDPophZV">SERVICE</div><div class="lcn" data-page-node-id="Rj5iKTRl4Tp00DDaM1ERCn">应用服务层</div></div>
+          <div class="cells" data-page-node-id="2rXKSWPDmG6DBEyT0KzaoZ"><div class="cell" data-page-node-id="ATszQLHtswcRczR7O3eQ9z">Router 路由</div><div class="cell" data-page-node-id="BQLPInagyETqUzQJCteB3W">Service 业务</div><div class="cell" data-page-node-id="y1wysI4YKSZzrKwHpr8Q6h">Repository 仓储</div><div class="cell" data-page-node-id="IQ6QlkGEoyEiHF6anBOZdP">Pydantic v2 校验</div><div class="cell" data-page-node-id="ckEv02wHD9oyLsO2rqHCpP">RBAC 依赖注入</div><div class="cell" data-page-node-id="jjNAmIOSKUdPKnm4pqUeI5">AuditMiddleware</div></div></div>
+        <div class="arrowdown" data-page-node-id="rcKTJyeNX1cRVyKtCHSbAq">▼</div>
+        <div class="layer l3" data-page-node-id="DUeO30LmlCKGwkOiNpyHfk"><div class="lab" data-page-node-id="LyskjqxscNNs1BfrpjP6Wy"><div class="len" data-page-node-id="0pcq9gVKGElwfZQjmZUF7y">ENGINE</div><div class="lcn" data-page-node-id="GjrBrJaoqsPFZPh6omxptD">引擎层</div></div>
+          <div class="cells" data-page-node-id="FERT061DAPdQVHUpXw159K"><div class="cell" data-page-node-id="r1iiJLXJB8p2CubkdAfXh0">流程引擎</div><div class="cell" data-page-node-id="65xhyKNVuh41la5Kstpbza">建模引擎</div><div class="cell" data-page-node-id="T3Vw8HWy88eTxGEtm1biuu">日志中心</div><div class="cell" data-page-node-id="vnedxjbf6BHYwQU2oJn0mq">内容引擎</div><div class="cell" data-page-node-id="dhnmx38n6fT1Ph8G2P2BwR">消息中心</div><div class="cell" data-page-node-id="LsGsXHiz2SfAxwnMqDFAhG">报表中心</div><div class="cell" data-page-node-id="FcB7jyWk0MT9K37ph055nL">组织权限</div><div class="cell" data-page-node-id="LrU6QJW9B0oznWGnpxQ8mn">实时总线</div></div></div>
+        <div class="arrowdown" data-page-node-id="iiMzM3uoH5GTn7QZeQ73aC">▼</div>
+        <div class="layer l5" data-page-node-id="m41dhUaRKLMNMMMmkOq8KO"><div class="lab" data-page-node-id="h50SezNwihUBoM71F1f6Qt"><div class="len" data-page-node-id="D8HvZ8267QcxnqVZON2ucM">DATA / INFRA</div><div class="lcn" data-page-node-id="uPshSlzkuhsSV0GRYOEpW2">数据与设施</div></div>
+          <div class="cells" data-page-node-id="S9SGsOUiN1vDPNDnYPeYoe"><div class="cell" data-page-node-id="GuFlzseBUGG9uRv4a4rNz9">PostgreSQL 16 / SQLite</div><div class="cell" data-page-node-id="YmPcGp8hSulcUnuI8sIIBh">SQLAlchemy(async)</div><div class="cell" data-page-node-id="JVmEBp2CBwbIR2URjIIqJN">Alembic 迁移</div><div class="cell" data-page-node-id="KBZSSxBDFG75lNigB2I0er">本地 uploads / S3</div><div class="cell" data-page-node-id="BlBPQC7FRzjlzyNBcxgA1m">Docker Compose</div><div class="cell" data-page-node-id="MmeCVHlMaVXb17yPK6H6b4">GitHub Actions CI</div></div></div>
+      </div>
+      <div class="grid g3" style="flex-shrink:0;" data-page-node-id="T21NitqQGA33OEBwT1uJTJ">
+        <div class="card" style="padding:6px 10px;" data-page-node-id="Q0Tfg6RQnFQZzwlZjbE16Z"><div class="ch" style="font-size:11px;" data-page-node-id="grHYwGxWpHn2Ai8VgLV7TK">分层解耦</div><div class="cb" data-page-node-id="ZKau9w3qp91QhypG6xjEcB">Router 只做参数与依赖、Service 管事务与业务、Repository 用 <em data-page-node-id="52GjflA07d5EW9PEDaoXGt">selectinload</em> 防 N+1；引擎为<b data-page-node-id="QhxjT7BLVTR7oUNKmQvmkF">零依赖纯函数</b>，可脱离框架单测。</div></div>
+        <div class="card" style="padding:6px 10px;" data-page-node-id="3Dl59G5n1GOJ2JcewVLW2A"><div class="ch" style="font-size:11px;" data-page-node-id="6BPCGH3xxMQxWk6tuDkyTF">双存储适配</div><div class="cb" data-page-node-id="rlTILE6ADMd5c9o4fNxELr">开发用 SQLite 零配置，生产切 PostgreSQL 16；模型变更由 Alembic 迁移，<b data-page-node-id="TuHnyws7gC6fHKeRX6ktDm">SQLite/PG 双环境</b>已验证通过。</div></div>
+        <div class="card" style="padding:6px 10px;" data-page-node-id="JFnAVt3C0My1pSb0Pn1c3R"><div class="ch" style="font-size:11px;" data-page-node-id="myZf1zeiqOfXfgUMDgcd4a">安全基线</div><div class="cb" data-page-node-id="4HwoSWAG92dqweGc16Hs40">访问令牌 15 min + 刷新令牌服务端可吊销；密码用 <em data-page-node-id="pCmspAWXHOwjHQrjAbgpcW">PBKDF2-HMAC</em> 哈希（零原生依赖）；审计中间件零侵入留痕。</div></div>
+      </div>
+    </div></div>
+    <div class="sm" data-page-node-id="bqtlAJLL1UNx1dHjTz3kvt"><span class="smbar" data-page-node-id="ySI0FCyCUsPMNISyGuaimv"></span><span class="smtext" data-page-node-id="4f4BC08NgbhyV1qaDxYv2d">zk-OA 采用 <b data-page-node-id="fhyQuJOVfVCUsVIGioOApq">五层同构架构</b>：前端 → 接入 → 服务 → 引擎 → 数据/设施，以纯函数引擎 + 双存储适配实现<b data-page-node-id="zeyIhBHWJ7mhkyE8WshQaz">轻量但对标</b>。</span>
+      <span class="smspacer" data-page-node-id="l2qyVOy7TuxHO8wa5YajWt"></span><span class="chip" data-page-node-id="vqGQPKnk8zOE2nBpmKMjEa">5 Layers</span><span class="chip" data-page-node-id="seiQ8iboN7BXSAou668wLy">纯函数引擎</span><span class="chip" data-page-node-id="9VjCltjuA7NB2GMKOnBgNc">双存储</span></div>
+    <div class="ft" data-page-node-id="Bv8wIuMe9yWAFFifNeHbiX"><span data-page-node-id="K0PzCwinytp0ag1uiFP2zC">中科智电 · OA 系统架构与全流程</span><span class="prog" data-page-node-id="lyxapfLEwwGBvmtoFKGAHh"><i style="width:67%" data-page-node-id="cF5hyr5DFByoFUwQb2d58S"></i></span><span data-page-node-id="3UolfsDeSFLZFCWAAeB22O">09/15</span></div>
+  </section>
+
+  <!-- P10 技术栈结构图 -->
+  <section class="slide" data-page-node-id="dgql9RDeE2RydPMlABBj8E">
+    <div class="hd" data-page-node-id="GHWLGq2RiiZ3wvnRJwtiBl"><div class="hl" data-page-node-id="v7oCxNHnHHtGfS5ttLdxME"><div class="eyebrow" data-page-node-id="ZkLvEazoEzLMV8IdHh1efo">PART 02 · 技术选型</div><h2 class="ptitle" data-page-node-id="M1pPG8U2We7F5Biu9RDFAE">zk-OA · 技术栈结构全景图</h2></div>
+      <div class="hr" data-page-node-id="3Uy9HWZzb3cqGT8rGx1Bpj"><span class="tag" data-page-node-id="nBndwzmFgYrATsmIVsHUCe">技术栈</span><span class="lamp" data-page-node-id="JoDfggycCQCDr5a3AObVzG"></span><span class="pgnum" data-page-node-id="D1bkcSw3HlIqojxrGZugjE">10 / 15</span></div></div>
+    <div class="ct" data-page-node-id="RjqryhCmGrWVRyqLHSDCtP"><div class="wrap" data-page-node-id="tCQA7DaNwh8NK0o32VPP4y">
+      <div class="grid g4" style="flex:1.15;" data-page-node-id="JZPbQKEYDKtNNuYuJvUoUB">
+        <div class="card" data-page-node-id="lkPSwrxn79LmZlUMSufw3N"><div class="ch" data-page-node-id="EvGi1K3QYa5HSCgAiZ7yYa"><span class="ic" data-page-node-id="hnoBS3mdcFblkRsSUKIqXm">UI</span>前端</div>
+          <div class="cb" data-page-node-id="v9gRCakshj5Fdjr7sSKjOm">React <b data-page-node-id="cKaK2RndBBFiayhaXts9zj">19</b> + TypeScript 严格模式；AntD 5 组件库；Vite 6 构建，TanStack Query 管缓存，axios 类型化客户端。</div>
+          <div class="chiprow" data-page-node-id="pMk6DV8owtOqcUVDFpTYtE"><span data-page-node-id="qoW9vIuWBmZvdIxezUnzHF">React 19</span><span data-page-node-id="fZbVJOO7947IPIKxRB6CuU">TypeScript</span><span data-page-node-id="uyCRDLgctw2rtXycS0R66b">AntD 5</span><span data-page-node-id="SNtb2qkecc4RlBG1dWVQ4q">Vite 6</span><span data-page-node-id="75c5sByC9SvM2vTJTtK06Q">TanStack Query</span><span data-page-node-id="y2m23jkR9JULZzhSUMWWm9">axios</span></div></div>
+        <div class="card" data-page-node-id="Dkq1nK5CWVVwTxBTLQOsae"><div class="ch" data-page-node-id="c4E4Dm5MJBEagFvIe7SO3q"><span class="ic" data-page-node-id="28En9psIruJ3rEZ3J3m2tb">API</span>后端</div>
+          <div class="cb" data-page-node-id="V53PFWaHjTi1508W0o00JQ">FastAPI 提供 OpenAPI 文档与依赖注入；Pydantic v2 做请求校验；SQLAlchemy 2 异步 ORM，Alembic 管迁移。</div>
+          <div class="chiprow" data-page-node-id="sXTGFpckg6Jm49Ja87nL2W"><span data-page-node-id="opOUwSRJyKu2le21Lu8EpK">FastAPI</span><span data-page-node-id="74InObs6pnh5yN8ououDPY">Python 3.12</span><span data-page-node-id="VDB4R6aJtTA3bhvOVZP3Fk">Pydantic v2</span><span data-page-node-id="V66V1b6gA8f1ksoSWoMEVP">SQLAlchemy 2</span><span data-page-node-id="CGPg2HJbQAqDygGE4lsuVy">Alembic</span><span data-page-node-id="iXKiCqSGiyP42AKgGg0NMo">Uvicorn</span></div></div>
+        <div class="card" data-page-node-id="0jP1G280VyuC0dPGoQEoHw"><div class="ch" data-page-node-id="3LrdNxbM1BJLjZaBmUZ64j"><span class="ic" data-page-node-id="sWn66pEukhSwnsnJWlpOqe">DB</span>数据与存储</div>
+          <div class="cb" data-page-node-id="i8oUwjobzfRtePkhgKgsVy">生产 <b data-page-node-id="msZZ2QnVAPHF60SYGdV4Jr">PostgreSQL 16</b>，开发 SQLite 零配置；审计日志走物理列索引，建模数据存 JSON 列并限流 <b data-page-node-id="L5EhAPChSpcmmYEMRzaq26">2000</b> 行扫描。</div>
+          <div class="chiprow" data-page-node-id="WKosNfCiEoUYwebyHlRlHC"><span data-page-node-id="cYhENRCq1WtebdbotxVvRI">PostgreSQL 16</span><span data-page-node-id="fDHgFKU495bCDEmrk4V1Jr">SQLite</span><span data-page-node-id="RykO8ohnx1kbFs8dt2FIj2">asyncpg</span><span data-page-node-id="8mDDNf5I80KGtmTIDgSeFs">本地 uploads/</span><span data-page-node-id="AH9WPbvYVvUfwBMJ0zkDuq">对象存储 S3</span></div></div>
+        <div class="card" data-page-node-id="GH858x1bYvsmGvJz4urm7P"><div class="ch" data-page-node-id="XVaY3GaaWeEizOEfwl6bQM"><span class="ic" data-page-node-id="xHe57UMJSgcFH7iU3DA4lp">OPS</span>部署与工程</div>
+          <div class="cb" data-page-node-id="6xiOBRbYXhFlJblk32uIS1">Docker Compose 编排三服务（db / backend / frontend），Nginx 托管静态资源并透传 SSE；CI 跑后端编译测试 + 前端类型检查。</div>
+          <div class="chiprow" data-page-node-id="rMMPlUtlE8IaINrHjkPjCy"><span data-page-node-id="r0jn7d7jPSZyYiBdmXKjtJ">Docker Compose</span><span data-page-node-id="uUUQt5iBesiMPH2vBkIL6A">Nginx</span><span data-page-node-id="hF7r8LCVK4UaXTBVNwFwUR">GitHub Actions</span><span data-page-node-id="Y1LIp4Hbf4laFGYbPAkFEj">/health · /ready</span></div></div>
+      </div>
+      <svg viewBox="0 0 960 160" style="width:100%;flex:1;min-height:150px;" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans SC, sans-serif" data-page-node-id="8gIHVvJjAvzQf4t420hfp6">
+        <rect x="0" y="0" width="960" height="160" rx="6" fill="rgba(11,47,92,.02)" stroke="rgba(11,123,196,.18)" data-page-node-id="AKS3FfqUjiaMRK0a72G3lZ"/>
+        <text x="16" y="22" font-size="10.5" font-weight="700" fill="#0b7bc4" data-page-node-id="za38jkPDHnzOE59IJou0TQ">技术栈调用链 · REQUEST LIFECYCLE</text>
+        <g font-size="10" data-page-node-id="vDaodzlHRtv9VgHNPSytWG">
+          <rect x="20" y="42" width="150" height="40" rx="5" fill="rgba(11,123,196,.16)" stroke="rgba(11,123,196,.4)" data-page-node-id="DLNkQ2zNXtxsl4DgAQCgPD"/>
+          <text x="95" y="60" text-anchor="middle" fill="#0a6aa8" font-weight="600" data-page-node-id="lHSdz2CWODujYdPKvHyB1Y">浏览器 / React 19</text><text x="95" y="75" text-anchor="middle" font-size="8.5" fill="#8199b0" data-page-node-id="RMyId9KryYrlrNWDx0A2hU">axios + Query</text>
+          <rect x="215" y="42" width="150" height="40" rx="5" fill="rgba(217,119,6,.16)" stroke="rgba(217,119,6,.4)" data-page-node-id="IeLQt7uGEWZt80HbZzDcW0"/>
+          <text x="290" y="60" text-anchor="middle" fill="#b45309" font-weight="600" data-page-node-id="2KnWig96VYkdYfRjThBDCL">Nginx / JWT</text><text x="290" y="75" text-anchor="middle" font-size="8.5" fill="#8199b0" data-page-node-id="QPOTDtPOlpAmJUrR52gL9u">鉴权 + 反代</text>
+          <rect x="410" y="42" width="150" height="40" rx="5" fill="rgba(109,40,217,.16)" stroke="rgba(109,40,217,.4)" data-page-node-id="1YY3hE71bHmH8wVZeU2vOn"/>
+          <text x="485" y="60" text-anchor="middle" fill="#6d28d9" font-weight="600" data-page-node-id="GTdQ7jSSZjNUxchtG9Er9X">FastAPI Router</text><text x="485" y="75" text-anchor="middle" font-size="8.5" fill="#8199b0" data-page-node-id="huIBzz6Es52G3shIIHDXiC">Pydantic 校验</text>
+          <rect x="605" y="42" width="150" height="40" rx="5" fill="rgba(5,150,105,.16)" stroke="rgba(5,150,105,.4)" data-page-node-id="qAi3tsjhBPG5m4HscLvsg1"/>
+          <text x="680" y="60" text-anchor="middle" fill="#047857" font-weight="600" data-page-node-id="oLsfqdmIyzZw1NMjG9CJB9">Service + 引擎</text><text x="680" y="75" text-anchor="middle" font-size="8.5" fill="#8199b0" data-page-node-id="MomCZxcMvMpswkTWfKkhPK">事务 / 业务</text>
+          <rect x="800" y="42" width="140" height="40" rx="5" fill="rgba(100,116,139,.16)" stroke="rgba(100,116,139,.4)" data-page-node-id="cOkjW1aHhEW14PPOH2GoOB"/>
+          <text x="870" y="60" text-anchor="middle" fill="#475569" font-weight="600" data-page-node-id="XRhxKlWYt2LvrMtrDO6frl">Repository</text><text x="870" y="75" text-anchor="middle" font-size="8.5" fill="#8199b0" data-page-node-id="aJ32VP00TGwjY9VMpnBfft">SQLAlchemy</text>
+        </g>
+        <line x1="170" y1="62" x2="213" y2="62" stroke="#0b7bc4" stroke-width="1.5" data-page-node-id="Gvnm2U3GfvA9yW3kS2xxl4"/><polygon points="213,58 219,62 213,66" fill="#0b7bc4" data-page-node-id="8MTHsrpQS3LAKMaZUJPeak"/>
+        <line x1="365" y1="62" x2="408" y2="62" stroke="#0b7bc4" stroke-width="1.5" data-page-node-id="T4FKDHJqk0uTFM7TAiuhuA"/><polygon points="408,58 414,62 408,66" fill="#0b7bc4" data-page-node-id="orVCtLOx32eI5HpvbjlFZJ"/>
+        <line x1="560" y1="62" x2="603" y2="62" stroke="#0b7bc4" stroke-width="1.5" data-page-node-id="ifVCs1WPIXS51V7yaEKgqq"/><polygon points="603,58 609,62 603,66" fill="#0b7bc4" data-page-node-id="pHbBdyuCAwSg9BbzloDNnO"/>
+        <line x1="755" y1="62" x2="798" y2="62" stroke="#0b7bc4" stroke-width="1.5" data-page-node-id="E60dTQD9E2AyAudBlEwuKb"/><polygon points="798,58 804,62 798,66" fill="#0b7bc4" data-page-node-id="YlSL1RDnUssjZuOWAWFnfr"/>
+        <text x="16" y="112" font-size="10" fill="#3f5b78" data-page-node-id="eDgVlQ4TSuwDp4VENDTK6r">→ JWT 双令牌：访问令牌 <tspan fill="#0b7bc4" data-page-node-id="f7UVqusgpbGmRvwmRiwH8q">15min</tspan>，刷新令牌服务端存储、可吊销、登录轮换</text>
+        <text x="16" y="134" font-size="10" fill="#3f5b78" data-page-node-id="0jmyG6a4fzuVJ9Da9ECSK5">→ 密码哈希 <tspan fill="#0b7bc4" font-family="Rajdhani" data-page-node-id="HH2Mh97P85A9FFEmI4w0Jl">PBKDF2-HMAC</tspan>（零原生依赖、跨平台可移植）　·　审计中间件零侵入记录所有变更请求</text>
+      </svg>
+      <div class="grid g2" style="flex-shrink:0;" data-page-node-id="4LR9nMZ3AOd56umDZpqvIq">
+        <div class="card" style="padding:6px 10px;" data-page-node-id="E7E6FCRCF3ZohTlFAYaKlz"><div class="cb" data-page-node-id="FJbUtOd8xRvQDvQLRzj2Q4"><b data-page-node-id="8D0FwULsyAHziZuS8eeUu9">选型原则</b> · 前端重体验（AntD 组件即战力）、后端重可测（纯函数引擎 + 分层）、存储重可移植（SQLite/PG 双兼容），整体 <b data-page-node-id="RZraNjVeSFsLtgp1UaSCn0">零原生依赖</b> 优先。</div></div>
+        <div class="card" style="padding:6px 10px;" data-page-node-id="drSvhtOZdbnXbqKpC0d4qG"><div class="cb" data-page-node-id="99H71L1tGyS6KHUXWbKw9z"><b data-page-node-id="vJqEYGBRVuEZ8Opq2PqM7j">工程门禁</b> · CI 并行跑后端 <em data-page-node-id="z5lJ2kWMqOfqfAf7MiBRmx">compileall + pytest</em>（SQLite 免外部库）与前端 <em data-page-node-id="bBWoWHwIhPfmUyHX7WpNcK">typecheck + build</em>，把质量左移。</div></div>
+      </div>
+    </div></div>
+    <div class="sm" data-page-node-id="h54wAxmDjBORTthRAADLLR"><span class="smbar" data-page-node-id="pBnXTz7zGTn3Gesmn5OzmD"></span><span class="smtext" data-page-node-id="HDHeC2yxJosrhM24Ro3lGX">技术栈 = <b data-page-node-id="aG5NVrKImSAwAVN53xOqKy">React 19 + FastAPI + PostgreSQL</b> 三位一体；工程链路含 JWT 双令牌、PBKDF2 哈希、Docker/Nginx 与 CI 门禁。</span>
+      <span class="smspacer" data-page-node-id="ZPoeY2edmj5UvJ2wIg8Bu0"></span><span class="chip" data-page-node-id="rb7U7pkQaXxfUTkO9brhEm">React 19</span><span class="chip" data-page-node-id="JbPkpPuCuCQsIJa3jtXe32">FastAPI</span><span class="chip" data-page-node-id="XHlSY4iN5EKMFHwnFdXLDe">PostgreSQL</span></div>
+    <div class="ft" data-page-node-id="LNqLIr5H0Rj3p0tGAFMFIg"><span data-page-node-id="KNCO0uDWcoIsCu8FDGdv6h">中科智电 · OA 系统架构与全流程</span><span class="prog" data-page-node-id="pNs9YntpBeIfvG1XMlZKIG"><i style="width:73%" data-page-node-id="928Tv3LMlNxa0MO220QQQy"></i></span><span data-page-node-id="9lUree0IflLZBys4HoHLch">10/15</span></div>
+  </section>
+
+  <!-- P11 引擎能力对标表 -->
+  <section class="slide" data-page-node-id="p5Jpt5LypJhcFdzynjj67z">
+    <div class="hd" data-page-node-id="AY1oUqDCjxeJnpsdf5Kfvt"><div class="hl" data-page-node-id="yTar2v6LKTJ6SilZqVvXWp"><div class="eyebrow" data-page-node-id="GnI000MvRDJCWtCwcdmqa6">PART 02 · 能力对标</div><h2 class="ptitle" data-page-node-id="QC6Z1s7i2eK1fsAWnLA4u8">zk-OA · 七大引擎对标落地表</h2></div>
+      <div class="hr" data-page-node-id="iEZSnAGns58uGIHIN08uqs"><span class="tag" data-page-node-id="zptwwpa5h3MnrCGXWFsBM3">对标表</span><span class="lamp" data-page-node-id="8lNnJiYLHkwAxbGmNYkluU"></span><span class="pgnum" data-page-node-id="IjdQl74rDLdt030DO1MbPm">11 / 15</span></div></div>
+    <div class="ct" data-page-node-id="LSSwBZY5sIjgEKDqE6NSeF"><div class="wrap" data-page-node-id="UBOgiWdl8BOG4B9f9kBIEx">
+      <div class="card" style="flex:1;padding:10px 12px;" data-page-node-id="nnWk6ok2PaVO7FDSiyoz9M">
+        <table class="tbl" data-page-node-id="wAaZBVKst41xF4Qxi1fXWe">
+          <thead data-page-node-id="ATp8WGFiPVIA2vlb5cWAjC"><tr data-page-node-id="XQ4xHXEPp4rF26gATIVzPZ"><th style="width:13%;" data-page-node-id="ssikCImGHLkbII1eMLZJto">引擎 / 能力</th><th style="width:29%;" data-page-node-id="YVqha1LGTjV8BhynoeGiju">主流 OA 能力定义</th><th style="width:44%;" data-page-node-id="wiolPHAlSAZSg4GqVAHtlR">zk-OA 落地实现</th><th style="width:14%;" data-page-node-id="awDcfiHR7oDOoaMmb0RgYD">状态</th></tr></thead>
+          <tbody data-page-node-id="a2RVuH735YQ1mGAnWyZTfO">
+            <tr data-page-node-id="EEQQCf4IQDYWH4ba5CJCZz"><td data-page-node-id="mHQ5gNYUqrFST1UQaRMqeH"><b data-page-node-id="MMYt1WrHxvZhhthM3o0P7L">流程引擎</b></td><td data-page-node-id="S0Uz2Qo2ki91jcUG3qYDv5">流程建模、节点审批、会签 / 加签、超时升级</td><td data-page-node-id="VaUinA8jjpJ07uHIjQBy5s"><em data-page-node-id="h17BYAFclE8YQl820r3MJ0">workflow_engine.py</em> 纯函数图遍历；会签 / 加签 / 转办 / 撤回 / 催办；审批委托改派；监控看板 <em data-page-node-id="rk0CDexmMc3QLbeChvGxNP">/api/workflows/stats</em></td><td data-page-node-id="DmbOMjs9G3ApMHys4CKwjt"><span class="st ok" data-page-node-id="IF3YAAwdkgTxHQ8p9TUC8K">✅ 已落地</span></td></tr>
+            <tr data-page-node-id="9EteltB4pCHFH1AOdOQu0T"><td data-page-node-id="KSDggIEWhJawgN7g0YHpQk"><b data-page-node-id="d489FS13eHvE5ybfSt2jA1">建模引擎</b></td><td data-page-node-id="QpD4VCYkRDEFwL86SaCVwG">零代码自定义实体、表单与数据</td><td data-page-node-id="17SEMa8nhCp5VWfEPBhfsN">实体定义 + JSON 数据列，<b data-page-node-id="sQSubqpGK5PqYG2SuuRvTQ">零 DDL</b>；11 种字段类型；draft/published 生命周期；<em data-page-node-id="5mcN5o18QWA45UqY9RxGd4">MAX_SCAN=2000</em> 限流</td><td data-page-node-id="9FByUZ0QhTDWHLWwT0WDWN"><span class="st ok" data-page-node-id="X80gAcWp5pgyTIN7VRvGCk">✅ 已落地</span></td></tr>
+            <tr data-page-node-id="ZtSPj5fRaGQlj8wnWp5swW"><td data-page-node-id="Zi9OUJv3JSGGDOQzqaFWtC"><b data-page-node-id="cn9oDg4ZzNV2fHS5vLjb4p">内容引擎</b></td><td data-page-node-id="RyUmHkTrBY0dBnw4ixQ5K0">文档集中管理、版本、鉴权分发</td><td data-page-node-id="xzY0z2wnIOW9Xl0Z8oYdDU">文档中心 + 文档版本；<em data-page-node-id="zgN0AC6O5LmOAr5wtjPTU8">{id}.{ext}</em> 落盘防穿越；扩展名白名单；鉴权下载；本地 uploads 可换 S3</td><td data-page-node-id="PytmgARZdBvKU4O2UQYoZs"><span class="st ok" data-page-node-id="5nM7pqeQWiiP3E1Wbgh4jR">✅ 已落地</span></td></tr>
+            <tr data-page-node-id="fI3ieg5bZyhg24lv3VmZBN"><td data-page-node-id="AH0xAOayEAbbIKCNCcdumB"><b data-page-node-id="pMgkQjBaDG9paLhMnkjoAg">日志中心</b></td><td data-page-node-id="vL2CHLSHEbbM0tB5h8Fqd3">全量操作审计、可检索追溯</td><td data-page-node-id="yPXELXT8u8atxW77MhXYRI"><em data-page-node-id="5XRlLlWiOyc3ZRPF6QHlST">AuditMiddleware</em> 零侵入；actor/module/action/status 物理列索引；近 14 天趋势；<em data-page-node-id="0NQ3qtvtODKavAMgP89EXs">/api/audit/*</em></td><td data-page-node-id="1clpLucDUrYmoFXeCPHffW"><span class="st ok" data-page-node-id="ZDUhszjnFb52lFROEKFTHU">✅ 已落地</span></td></tr>
+            <tr data-page-node-id="ngA3J3F3TYKkNyF1UUi3YK"><td data-page-node-id="zGHuKADKJfLW3Z3sja1zJx"><b data-page-node-id="HJmsQsNWp7px043KT8G2ng">组织权限</b></td><td data-page-node-id="n2jHL66PvldxDJo1idbJNr">用户 / 角色 / 权限码三层管控</td><td data-page-node-id="4D0Nm1uL3iv3ekGcZHUX9C">RBAC + 权限码；角色 CRUD 需 <em data-page-node-id="zKkZBF5zq9TeeAywGK3QtO">org:role:manage</em>；<b data-page-node-id="wEB9ii54YjZczD7lc8Se6R">RBAC 边界 16/16 通过</b>（员工 403 / 管理员 200）</td><td data-page-node-id="9ZJPJpJhgFaTAIRIbdwsOj"><span class="st ok" data-page-node-id="ldY5rtzJzWqBHPxwz0teMW">✅ 已落地</span></td></tr>
+            <tr data-page-node-id="Jj61EqtDBn7dKw4limm9Ky"><td data-page-node-id="QwbGm6MDM3er9Zcbq6BqL8"><b data-page-node-id="l05ZVOrFseOoJuT4Od97yL">消息中心</b></td><td data-page-node-id="FkCgTQJc8rEy0goykRiwtp">统一待办、多通道触达、实时推送</td><td data-page-node-id="UZGN41qLHGpTb1fIqmuXtW">SSE 事件流 <em data-page-node-id="TQIM1D7sSbyATbpHQ5RZRW">/api/events/stream</em>（Nginx 关 buffering）；公告已读回执；待办聚合于工作台</td><td data-page-node-id="0hBjRkOoS806kG4LYqg9CR"><span class="st mid" data-page-node-id="1k5ATbxTH7p6VBgpyf3oni">🟡 基础就绪</span></td></tr>
+            <tr data-page-node-id="ZC6Zhu1BBJH4WM91YnvR4p"><td data-page-node-id="khKr7xJC1IxoQpVNOHwQKs"><b data-page-node-id="EBWQtItsqhFNm6OYBTHQFz">报表中心</b></td><td data-page-node-id="9vVnk77YpmWsSV1Q5lMZCE">流程效率、费用、考勤统计看板</td><td data-page-node-id="tLuNpDQOnLpCicszMnjl3T">考勤按人统计 + xlsx 导出、报销统计、流程监控看板、运维概览 <em data-page-node-id="UV1R4KPFVZYhABZ9oXzOaH">/api/ops/overview</em></td><td data-page-node-id="FL9tTXcbWdFXyz1YF74av1"><span class="st mid" data-page-node-id="aIV4Qk5FVpmt9V81AQELTN">🟡 部分就绪</span></td></tr>
+            <tr data-page-node-id="AsnAQOLJ3RQnWJWODae9Fm"><td data-page-node-id="sRM96E7VEUJC3GxQEiQWJY"><b data-page-node-id="fpWOxMGFvscKsanMojA1t3">电子签单</b></td><td data-page-node-id="Wb57wDgXYhqvVmbPSf50VP">电子签名、单据留痕、合规存证</td><td data-page-node-id="hidevuT0BvoS3nITS0QRqT">Canvas 手写签名 + <b data-page-node-id="8XXOJX73DDUUmWHkyue0B8">SHA-256</b> 校验；按 <em data-page-node-id="qmcwYlv8EkyKsizsGGNHbX">ref_type/ref_id</em> 关联业务单据</td><td data-page-node-id="KrJMEpr8cpHRoVRm9KeLOA"><span class="st mid" data-page-node-id="8qcyPM6C9pjVrGCxv3V6qp">🟡 基础就绪</span></td></tr>
+            <tr data-page-node-id="uqZC3gK3ilUF1HgXg4VUfU"><td data-page-node-id="Ircq7FH9ehR4qnhVMnZCX4"><b data-page-node-id="G7gL2naE2yQvo4IlRRJsa0">集成引擎</b></td><td data-page-node-id="wJJxwAGYEAvi7ZQ9gFqlAO">对接外部系统、开放 API</td><td data-page-node-id="T0t0CJo8B9vWE7E6ah2Ik5">REST + OpenAPI 自动文档；CORS 显式来源；预留事件总线（SSE）对接 ERP / IM</td><td data-page-node-id="6YfnF6CzQa4F6DlaOcWqbL"><span class="st plan" data-page-node-id="dZD5Y6VVGe8PeGRajuN0Vx">⬜ 规划中</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div></div>
+    <div class="sm" data-page-node-id="J0QqgfWgnxoRRqBkEuwr7s"><span class="smbar" data-page-node-id="Hjt3pWiaxGxaTNnmuyFJ77"></span><span class="smtext" data-page-node-id="5tZQBxrwItxG8havcseX71">七大引擎中 <b data-page-node-id="sTuM9hwbf3KDaTUaxFzqRL">5 项已完整落地</b>（流程 / 建模 / 内容 / 日志 / 权限），消息、报表、签单 <b data-page-node-id="rJ5uwu3jkLvEjFQdImuy33">3 项基础就绪</b>，集成引擎进入规划。</span>
+      <span class="smspacer" data-page-node-id="wqkfpaZsG2CYZLZyuRWMfc"></span><span class="chip" data-page-node-id="AhBa1SEgmRJ4AVbaLTw6fg">5 ✅</span><span class="chip" data-page-node-id="h85YPnhFYiusjtc2aJwGmp">3 🟡</span><span class="chip" data-page-node-id="skTk3RuR0yAM2huwXfPcuS">1 ⬜</span></div>
+    <div class="ft" data-page-node-id="YDFMOFHODs1D47PWpVV1eF"><span data-page-node-id="E2BfzcUB1DXJKkTKFMxHdL">中科智电 · OA 系统架构与全流程</span><span class="prog" data-page-node-id="yBNTrir2oPGsGFYsgyopnN"><i style="width:80%" data-page-node-id="JGeaVhqGza7JFS37MG7Wtv"></i></span><span data-page-node-id="1qB7cDbY3Ne15UR8oXZ4qV">11/15</span></div>
+  </section>
+
+  <!-- P12 zk-OA 报销流程 -->
+  <section class="slide" data-page-node-id="a9EkQIkpu09l6UWTPXtfVB">
+    <div class="hd" data-page-node-id="FiXvuJGz32A5FHZzevvEyL"><div class="hl" data-page-node-id="ZvQRGJfS1skRO2UPmglXmw"><div class="eyebrow" data-page-node-id="aYoxOpnfbeI4dKrdbRXsEv">PART 02 · 核心业务流程</div><h2 class="ptitle" data-page-node-id="C7tOjNfl5LEtUbklZtE6mn">zk-OA · 费用报销审批全流程图</h2></div>
+      <div class="hr" data-page-node-id="9vts6KMCeI5DqHqhgBHHEi"><span class="tag" data-page-node-id="p9HMMz2KNmjypFvlrTcgl6">全流程图</span><span class="lamp" data-page-node-id="HiNXslVEH5DGqhh0WY4SFp"></span><span class="pgnum" data-page-node-id="0rPylyS2upV5RE9xSQOW8b">12 / 15</span></div></div>
+    <div class="ct" data-page-node-id="dT1HVXsCjk5bh2pe25MJCo"><div class="wrap" data-page-node-id="3X6WojGq7SDHimu1oIpW9x">
+      <svg viewBox="0 0 1280 480" style="width:100%;flex:1;min-height:300px;" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans SC, sans-serif">
+  <defs>
+    <marker id="e-ar" markerWidth="8" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0,0 L0,8 L8,4 z" fill="#0b7bc4"/></marker>
+    <marker id="e-gr" markerWidth="8" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0,0 L0,8 L8,4 z" fill="#0f9d6f"/></marker>
+    <marker id="e-rd" markerWidth="8" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0,0 L0,8 L8,4 z" fill="#ef4444"/></marker>
+  </defs>
+
+  <rect x="0" y="0" width="1280" height="480" rx="8" fill="rgba(11,47,92,.045)" stroke="rgba(11,47,92,.06)"/>
+
+  <line x1="140" y1="0" x2="140" y2="480" stroke="rgba(11,123,196,.25)"/>
+  <line x1="0" y1="120" x2="1280" y2="120" stroke="rgba(11,47,92,.07)"/>
+  <line x1="0" y1="240" x2="1280" y2="240" stroke="rgba(11,47,92,.07)"/>
+  <line x1="0" y1="360" x2="1280" y2="360" stroke="rgba(11,47,92,.07)"/>
+
+  <rect x="0" y="0" width="140" height="120" fill="rgba(11,123,196,.14)"/><text x="70" y="65" text-anchor="middle" font-size="14" font-weight="700" fill="#0b7bc4">员工</text>
+  <rect x="0" y="120" width="140" height="120" fill="rgba(217,119,6,.12)"/><text x="70" y="185" text-anchor="middle" font-size="14" font-weight="700" fill="#e08a00">直属主管</text>
+  <rect x="0" y="240" width="140" height="120" fill="rgba(5,150,105,.12)"/><text x="70" y="305" text-anchor="middle" font-size="14" font-weight="700" fill="#0f9d6f">财务</text>
+  <rect x="0" y="360" width="140" height="120" fill="rgba(100,116,139,.12)"/><text x="70" y="425" text-anchor="middle" font-size="14" font-weight="700" fill="#64748b">系统引擎</text>
+
+  <line x1="290" y1="92" x2="290" y2="148" stroke="#0b7bc4" stroke-width="1.8" marker-end="url(#e-ar)"/>
+  <line x1="390" y1="180" x2="660" y2="180" stroke="#0b7bc4" stroke-width="1.8" marker-end="url(#e-ar)"/>
+  <line x1="720" y1="212" x2="720" y2="268" stroke="#0b7bc4" stroke-width="1.8" marker-end="url(#e-ar)"/>
+  <line x1="820" y1="300" x2="1030" y2="300" stroke="#0b7bc4" stroke-width="1.8" marker-end="url(#e-ar)"/>
+  <line x1="1140" y1="268" x2="1140" y2="92" stroke="#0f9d6f" stroke-width="1.6" stroke-dasharray="6,5" marker-end="url(#e-gr)"/>
+  <line x1="720" y1="332" x2="720" y2="392" stroke="#0b7bc4" stroke-width="1.8" marker-end="url(#e-ar)"/>
+  <path d="M880,424 H1140 V332" fill="none" stroke="#0b7bc4" stroke-width="1.8" marker-end="url(#e-ar)"/>
+  <path d="M190,60 H160 V424 H560" fill="none" stroke="#0b7bc4" stroke-width="1.3" stroke-dasharray="5,5" opacity=".75"/>
+  <path d="M720,148 V60 H390" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#e-rd)"/>
+
+  <rect x="190" y="28" width="200" height="64" rx="7" fill="rgba(11,123,196,.16)" stroke="rgba(11,123,196,.5)"/>
+  <text x="290" y="54" text-anchor="middle" font-size="13" font-weight="600" fill="#0a6aa8">填单 · 挂附件</text>
+  <text x="290" y="74" text-anchor="middle" font-size="11" fill="#8199b0">草稿 draft</text>
+
+  <rect x="1030" y="28" width="220" height="64" rx="7" fill="rgba(11,123,196,.16)" stroke="rgba(11,123,196,.5)"/>
+  <text x="1140" y="54" text-anchor="middle" font-size="13" font-weight="600" fill="#0a6aa8">查看结果</text>
+  <text x="1140" y="74" text-anchor="middle" font-size="11" fill="#8199b0">状态通知</text>
+
+  <rect x="190" y="148" width="200" height="64" rx="7" fill="rgba(217,119,6,.16)" stroke="rgba(217,119,6,.5)"/>
+  <text x="290" y="174" text-anchor="middle" font-size="13" font-weight="600" fill="#b45309">审批通过</text>
+  <text x="290" y="194" text-anchor="middle" font-size="11" fill="#8199b0">tasks / decide</text>
+
+  <polygon points="720,148 780,180 720,212 660,180" fill="rgba(217,119,6,.2)" stroke="rgba(217,119,6,.6)"/>
+  <text x="720" y="185" text-anchor="middle" font-size="13" font-weight="600" fill="#b45309">通过?</text>
+
+  <rect x="620" y="268" width="200" height="64" rx="7" fill="rgba(5,150,105,.16)" stroke="rgba(5,150,105,.5)"/>
+  <text x="720" y="294" text-anchor="middle" font-size="13" font-weight="600" fill="#047857">确认打款</text>
+  <text x="720" y="314" text-anchor="middle" font-size="11" fill="#8199b0">/ paid</text>
+
+  <rect x="1030" y="268" width="220" height="64" rx="7" fill="rgba(5,150,105,.16)" stroke="rgba(5,150,105,.5)"/>
+  <text x="1140" y="294" text-anchor="middle" font-size="13" font-weight="600" fill="#047857">闭环完成</text>
+  <text x="1140" y="314" text-anchor="middle" font-size="11" fill="#8199b0">paid · 终态回写</text>
+
+  <rect x="560" y="392" width="320" height="64" rx="7" fill="rgba(100,116,139,.16)" stroke="rgba(100,116,139,.45)"/>
+  <text x="720" y="418" text-anchor="middle" font-size="13" font-weight="600" fill="#475569">提交 → 触发 expense-claim 流程</text>
+  <text x="720" y="438" text-anchor="middle" font-size="11" fill="#8199b0">状态回写 · 审计留痕</text>
+
+  <text x="734" y="232" font-size="13" font-weight="600" fill="#0b7bc4">是</text>
+  <text x="450" y="50" font-size="12" fill="#ef4444">驳回 → 退回草稿</text>
+  <text x="1270" y="180" text-anchor="end" font-size="11" fill="#0f9d6f">状态回写 · 通知发起人</text>
+  <text x="168" y="300" font-size="11" fill="#0b7bc4" opacity=".9">提交即触发</text>
+
+  <text x="1268" y="472" text-anchor="end" font-size="10" font-family="Rajdhani" letter-spacing="1" fill="#8199b0">EXPENSE-CLAIM · 4 LANES / CLOSED LOOP</text>
+</svg>
+      <div class="grid g4" style="flex-shrink:0;" data-page-node-id="XhTGYznTofSpAxjf4Db1Z0">
+        <div class="card" style="padding:6px 9px;" data-page-node-id="NMaOdb7iJZ75ZFixIMQ3zb"><div class="ch" style="font-size:11px;" data-page-node-id="Ibb1A6BfaGlHYH9eB4I5yp">草稿</div><div class="cb" data-page-node-id="wiDuTGvuGTalxfwmBjzy8s">填单挂附件，状态 <em data-page-node-id="73306axDTAx9FcdMC71GVC">draft</em>；<b data-page-node-id="fNSHo9WFDI8vGSxaCDnkh1">draft 未提交不入流程</b>，可反复修改。</div></div>
+        <div class="card" style="padding:6px 9px;" data-page-node-id="nDsrDgboh5eki6uJRbD96H"><div class="ch" style="font-size:11px;" data-page-node-id="BQKkodYL6Z3u7SFM03F7CE">提交</div><div class="cb" data-page-node-id="X1VFDsiUGj4oyKSSnGjswJ">提交即触发预置流程 <em data-page-node-id="qs0aZNHxxCxtAPOl94e3Do">expense-claim</em>，生成实例与待办任务。</div></div>
+        <div class="card" style="padding:6px 9px;" data-page-node-id="PoHySz63BCUvEYcgYouVDB"><div class="ch" style="font-size:11px;" data-page-node-id="4SAwvryDqHrXD0KxVV5V2s">审批</div><div class="cb" data-page-node-id="R8TSwffmvOMvJndcnRS5lS">主管通过 → 财务打款；驳回则<b data-page-node-id="dAyF0gYJKCaVSsa7bVpV3y">回退草稿并解除流程关联</b>。</div></div>
+        <div class="card" style="padding:6px 9px;" data-page-node-id="uueh6FUDS0tAUDRmvBQfiR"><div class="ch" style="font-size:11px;" data-page-node-id="nhd0VQmwlqQB4DXqrYgQ11">回写</div><div class="cb" data-page-node-id="Mkww5vTropG6WW8WaBf7KK">终态回写报销单状态，形成 <em data-page-node-id="ph9GWLnvVaENRwC5YCsuTj">draft→submitted→paid</em> 闭环。</div></div>
+      </div>
+    </div></div>
+    <div class="sm" data-page-node-id="r0KEaNBZBFsJZqVAKY6W2D"><span class="smbar" data-page-node-id="FhATq7WFvFLeRrbnWuFlAa"></span><span class="smtext" data-page-node-id="EEJhAOEFfKFJXiwVqdXPEa">报销单 = <b data-page-node-id="JcOStK8mrDcYykfp5CCF30">草稿→提交→审批→打款</b> 四态闭环；<b data-page-node-id="TnCgNznk5OXhHw72aKZlGH">状态回写 + 审计留痕</b>由系统引擎自动完成，无需人工同步。</span>
+      <span class="smspacer" data-page-node-id="eSn1RIl40icPOSFzzygGtU"></span><span class="chip" data-page-node-id="syyeOHWuScldTFUdF6kcwh">expense-claim</span><span class="chip" data-page-node-id="whRaSHc3gMB4SH5lywWuEz">闭环</span></div>
+    <div class="ft" data-page-node-id="Tm71yPbWub7fLmJjCb3A1l"><span data-page-node-id="2VW54ECB86Ph4NucTakHf9">中科智电 · OA 系统架构与全流程</span><span class="prog" data-page-node-id="BIFRwNMz9dx5FftUgk7SrF"><i style="width:87%" data-page-node-id="fWAFBqiXzsvunsBBlC7CWc"></i></span><span data-page-node-id="V9bFZIl4neYoJAmCxui5ou">12/15</span></div>
+  </section>
+
+  <!-- P13 质量门禁与建设规划 -->
+  <section class="slide" data-page-node-id="WSRW5nRn5oEZ9Xm4mH88zp">
+    <div class="hd" data-page-node-id="17MAX5huVCpRz0oxoPMfwT"><div class="hl" data-page-node-id="DhjU4L8QC8QXJ32MMavkJG"><div class="eyebrow" data-page-node-id="VnRRXG2IVGukIFjxFOUcal">PART 02 · 质量与规划</div><h2 class="ptitle" data-page-node-id="XSRRZM2k6FzQ3kiISj8foI">zk-OA · 质量门禁与三期建设规划</h2></div>
+      <div class="hr" data-page-node-id="y1rntimBV0TZsVdoSBHENh"><span class="tag" data-page-node-id="oXVl9Hi4tuhEoEJIet3DIF">KPI · 规划</span><span class="lamp" data-page-node-id="v8pRVBhADaVGMePWxoSQaz"></span><span class="pgnum" data-page-node-id="2yGN91pxYGbCX0FDrwpO2z">13 / 15</span></div></div>
+    <div class="ct" data-page-node-id="K1ZSNpbvuD0te13G0u2g8v"><div class="wrap" data-page-node-id="sEndAlVXpFPVwFW45TorgK">
+      <div class="kpi" data-page-node-id="4dYYpGS28zVq0iHF1Kl576">
+        <div class="k" data-page-node-id="0m78SJPrH7EMgncW2Tk7jR"><div class="kv" data-page-node-id="DFOvyf2H6bEfR0JvJBGhxi">59</div><div class="kl" data-page-node-id="Cw3DA81fU3lpFeqiXC51Na">后端 pytest 通过（含 11 处回归）</div></div>
+        <div class="k" data-page-node-id="H5Gw00Hy9E8mwBGGpkyDvE"><div class="kv" data-page-node-id="gKY68YfQOp0AwFHcqqY6P4">128</div><div class="kl" data-page-node-id="1qhpEGvfd16BNczJfVtd3d">HTTP 端到端冒烟全通过</div></div>
+        <div class="k" data-page-node-id="0Y6wGCt9bxFCpB6cV1VPL9"><div class="kv" data-page-node-id="ffAjnD85MENaMbUwLjCdga">16/16</div><div class="kl" data-page-node-id="woHj5GtZNLQrTKn2KIzYb0">RBAC 权限边界验证</div></div>
+        <div class="k" data-page-node-id="dCZwTrxVYoQmaCskxTScDr"><div class="kv" data-page-node-id="Wa4jc7wUQQLFeSg0WGZbeP">0</div><div class="kl" data-page-node-id="BsTFJ1ODyCIAsAQNbnA7un">前端 TypeScript 错误</div></div>
+      </div>
+      <div class="tl" data-page-node-id="t66gzjTmBBZVfAFLgvUXqR">
+        <div class="tlnode" data-page-node-id="MRHRXhAlmCQ0aBRfOgH2F2"><div class="tn" data-page-node-id="kEr0WUAcok4fsRuqxNJ4bJ">P0 – P2 · DONE</div><div class="tt" data-page-node-id="Kt8FQqxP4KxAuDKBPADE9C">核心底座已上线</div><div class="td" data-page-node-id="TO5NMDCQEJ1OkXHXF47kpK">流程引擎 / 组织权限中心 / 内容门户三大引擎落地；六大基础模块（用户部门、请假、公告、工作流、文档、签单）完整可用，JWT 双令牌 + RBAC 鉴权体系成型。</div><div class="chiprow" data-page-node-id="gFDqON6UfavXWljALSQ3TN"><span data-page-node-id="8kIxBW4NiFprGDvIEpXUxg">流程引擎</span><span data-page-node-id="SAzRvYDCdhXS0BCev4xnyJ">RBAC</span><span data-page-node-id="wcK2isyg5PNnGxoxrCIUXN">内容门户</span></div></div>
+        <div class="tlnode" data-page-node-id="TKDWUbkEDMludkTu3hHYCX"><div class="tn" data-page-node-id="gdlXLT9dzI90DK6CCKBlTo">P3 – P4 · DONE</div><div class="tt" data-page-node-id="nb9Vd9RegtgkipbZCv2i4r">七大引擎收官切片</div><div class="td" data-page-node-id="zZyFZ0fPBeukcQ6ErDrNbV">运维中心 + 建模引擎 + 日志中心 + 内容引擎连续交付；补齐考勤 / 委托 / 报销 / 公文 4 个业务模块，前端 4 个完整页面，59+128 项测试全绿。</div><div class="chiprow" data-page-node-id="PAKHHWMv7K6GlSaPfRi2qc"><span data-page-node-id="DbDdtY7BrEAKDNuV8KwMIK">建模引擎</span><span data-page-node-id="5fK1MWlDOYcNoKdKmd1C1B">审计日志</span><span data-page-node-id="9kXboM6OGQ8yzmKi8A78ot">4 新模块</span></div></div>
+        <div class="tlnode" data-page-node-id="A5oAenCyEC0ViEk52I2w9v"><div class="tn" data-page-node-id="ZtsVkgYrPlOn09pC0H0RHc">P5 · NEXT</div><div class="tt" data-page-node-id="sZ7nFG9XXwpuKcsX3u9gRl">生产加固与体验深化</div><div class="td" data-page-node-id="wq8ltx4YRlEg3xOBtx7mZd">刷新令牌改 httpOnly Cookie、对象存储替换本地落盘、报表中心与消息中心深化、集成引擎对接 ERP/IM；Alembic 全量迁移替代 create_all。</div><div class="chiprow" data-page-node-id="Ff2EKFStWOAv5o2mPulmyL"><span data-page-node-id="Wn3KgZnBMQgAAqzw6hjnc8">生产加固</span><span data-page-node-id="ZDqPecJ6HFH2XrWI7CUBB3">对象存储</span><span data-page-node-id="y5AV7CmcShBCDQHOqd4ifO">集成引擎</span></div></div>
+      </div>
+    </div></div>
+    <div class="sm" data-page-node-id="JJEDEKclDqCehMIMWSxxg1"><span class="smbar" data-page-node-id="aAQH2KxDnBV2vDMuGUJy7Q"></span><span class="smtext" data-page-node-id="UHzFSi3ADIU5afyAyVKgD0">质量门禁 <b data-page-node-id="D8KyoGuEnko4p8KMML0vpd">4 项全绿</b>；建设进度 <b data-page-node-id="B7sQuHFQ1jYrALw7KjWhZg">P0–P4 已完成</b>，进入 <b data-page-node-id="ldgnaNRN3qLCyuF9XDdip6">P5 生产加固</b> 阶段，重点转向安全与集成。</span>
+      <span class="smspacer" data-page-node-id="BE2Lgs4WKG159590soEkmp"></span><span class="chip" data-page-node-id="ruOz49RfFt7i7bvAX7F0fO">59 ✓</span><span class="chip" data-page-node-id="seqddREJZWScMyHAlp2LpW">128 ✓</span><span class="chip" data-page-node-id="K3DXc8MufmqoHKwn5l5EnG">P5 NEXT</span></div>
+    <div class="ft" data-page-node-id="z0MwoPt21BmGdfPrebbGCC"><span data-page-node-id="a5eR97LzgGFstfYb7Cursa">中科智电 · OA 系统架构与全流程</span><span class="prog" data-page-node-id="0QIby1j4AG7M37cKFLKsXC"><i style="width:93%" data-page-node-id="PqvtETKnfC6bDvCoDawaEc"></i></span><span data-page-node-id="b8HysheGl24UDu7a15Ekb4">13/15</span></div>
+  </section>
+
+  <!-- P14 结尾页 -->
+  <section class="slide cover" data-page-node-id="p3xWJ2VUPeJAgqbFZa966e">
+    <div class="covline" data-page-node-id="M0qyIvlUy7GOt1BN4gokmE"></div>
+    <div class="ct" data-page-node-id="f1CciUfFB7Xwvg3jAZoqTg"><div class="covwrap" data-page-node-id="bfy0jzH9CnphYjM3glgeis">
+      <div class="coveyebrow" data-page-node-id="qT9EoBblMEHAFQLiXumAa1">THANK YOU · 讨论与答疑</div>
+      <h1 class="covtitle" data-page-node-id="dEPkzy2dofErYR4VfQV2Js">谢谢聆听
+        <small data-page-node-id="KplpW2twZDWDtn1Hnr4FqD">从对标到落地 · zk-OA 持续演进</small></h1>
+      <div class="covsub" data-page-node-id="7GxiYVvO32LL0JTCGEvODh">主流 OA 的 <b data-page-node-id="OnBA4mJEH2vlPMDHECBSv3">6 能力域 · 5 层架构 · 7 引擎</b> 已完整映射到 zk-OA 的模块与技术栈；<b data-page-node-id="seBSCfwAivssRfs4rx6i0F">5 大引擎落地、3 项基础就绪</b>，下一阶段聚焦生产加固、对象存储与集成引擎。欢迎就架构选型、引擎深化与集成方案提出意见。</div>
+      <div class="covmeta" data-page-node-id="MkSEyWRWFrxH4mFkCHkBmL"><span data-page-node-id="W0BOcegLcLFJLBDvazn4ek">中科智电（江苏）能源有限公司 · 技术部</span><span data-page-node-id="NNxCwPPtu3tCsRvsdnodec">2026-09-29</span><span data-page-node-id="AzYtdLE6emYJsSHs1tpA31">Q &amp; A</span></div>
+      <div class="covtag" data-page-node-id="tGwtCMpbhP6oSLHscnSITe"><div class="big" data-page-node-id="WEmsIRtoyek7E4hv31vUb8">✓</div><div class="sm2" data-page-node-id="vMBB0MCRpf7Gqo7ov18BoT">END OF REPORT</div></div>
+    </div></div>
+    <div class="ft" style="z-index:2;" data-page-node-id="WEkuM8esuQy5qNFLKx0mmP"><span data-page-node-id="Jtgh8VqfnUsjJcdH2OD8sH">CONFIDENTIAL · 内部资料</span><span class="prog" data-page-node-id="CfrM7jhAgbrCbFtjge8BRx"><i style="width:100%" data-page-node-id="WKuumwpIqQ8YQBLE4KWIoP"></i></span><span data-page-node-id="ZJ6FGFMVu7dfGbGilwLKpf">END · 14/15</span></div>
+  </section>
+
+  </div>
+</div>
+
+<div class="nav" id="nav" data-page-node-id="lkIEmGBeVVJx4c8vIL3x1b">
+  <button id="prev" aria-label="上一页" data-page-node-id="iP9nDxKDSqurvVrVuUI0KF">◀</button>
+  <div class="dots" id="dots" data-page-node-id="6XmE7HwKLrd1bJJYVlTGuJ"></div>
+  <span class="counter" id="counter" data-page-node-id="Z5kk2xkQALXOcZd9UzGsls">01 / 15</span>
+  <button id="next" aria-label="下一页" data-page-node-id="o1WT4nPYLGjnDOPqtGX1sG">▶</button>
+</div>
+
+<script>
+(function(){
+  var deck=document.getElementById('deck');
+  var slides=Array.prototype.slice.call(deck.querySelectorAll('.slide'));
+  var total=slides.length, idx=0;
+  var dotsWrap=document.getElementById('dots');
+  var counter=document.getElementById('counter');
+  slides.forEach(function(s,i){
+    var d=document.createElement('i');
+    if(i===0)d.className='on';
+    d.addEventListener('click',function(){go(i);});
+    dotsWrap.appendChild(d);
+  });
+  var dots=Array.prototype.slice.call(dotsWrap.children);
+  function pad(n){return (n<10?'0':'')+n;}
+  function go(n){
+    if(n<0)n=0; if(n>=total)n=total-1;
+    slides.forEach(function(s,i){ s.classList.toggle('active',i===n); });
+    dots.forEach(function(d,i){ d.classList.toggle('on',i===n); });
+    counter.textContent=pad(n+1)+' / '+pad(total);
+    idx=n;
+  }
+  function fit(){
+    var s=Math.min(window.innerWidth/1280, window.innerHeight/720);
+    s=Math.min(s,2);
+    deck.style.transform='scale('+s+')';
+  }
+  document.getElementById('prev').addEventListener('click',function(){go(idx-1);});
+  document.getElementById('next').addEventListener('click',function(){go(idx+1);});
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();go(idx+1);}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(idx-1);}
+    else if(e.key==='Home'){go(0);} else if(e.key==='End'){go(total-1);}
+  });
+  var tx=0;
+  document.addEventListener('touchstart',function(e){tx=e.touches[0].clientX;},{passive:true});
+  document.addEventListener('touchend',function(e){
+    var dx=e.changedTouches[0].clientX-tx;
+    if(Math.abs(dx)>50){ go(dx<0?idx+1:idx-1); }
+  },{passive:true});
+  window.addEventListener('resize',fit);
+  fit(); go(0);
+})();
+</script>
+</body>
+</html>
